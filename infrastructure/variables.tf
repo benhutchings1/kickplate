@@ -20,10 +20,10 @@ variable "env" {
 
 variable "resource_prefix" {
     type = string
-    description = ""
+    description = "Prefix to add to all resource names"
 }
 
 variable "location" {
     type = string
-    description = ""
+    description = "Deployment location of resources"
 }

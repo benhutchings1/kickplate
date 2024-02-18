@@ -1,6 +1,6 @@
 from kubernetes.client.exceptions import ApiException
 import json
-from src import utils, kube
+from src import utils
 import re
 
 def create_exec_graph(json_def:dict, api_version:str="test.deploymentengine.com/v1",
@@ -24,7 +24,7 @@ def create_exec_graph(json_def:dict, api_version:str="test.deploymentengine.com/
     exec_graph_definition = format_request(json_def, api_version=api_version)
     
     # Create deployment
-    dy_client = kube.connect_to_kubenetes()
+    dy_client = utils.connect_to_kubenetes()
     resource = dy_client.resources.get(api_version='test.deploymentengine.com/v1', kind='ExecutionGraph')
     try:
         # Attempt to create graph resource

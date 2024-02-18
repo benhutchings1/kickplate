@@ -1,3 +1,5 @@
+from kubernetes import client, config
+from kubernetes.dynamic import DynamicClient
 import json
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
@@ -15,3 +17,8 @@ def validate_against_schema(json_schema:dict, json_def:str) -> tuple[bool, str]:
 def read_schema(path:str) -> dict:
     with open(path, "r") as fs:
         return json.loads(fs.read())
+
+
+def connect_to_kubenetes() -> DynamicClient:
+    config.load_kube_config()
+    return DynamicClient(client.ApiClient())

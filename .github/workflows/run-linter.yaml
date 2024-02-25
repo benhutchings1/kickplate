@@ -1,0 +1,21 @@
+name: Run Linter
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+jobs:
+  run-linter:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v5
+    - name: Checkout to correct directory
+      run: pip install -r dev-requirements.txt
+    - name: Run pylint
+      run: pylint --recursive=y api/
+
+
+

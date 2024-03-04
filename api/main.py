@@ -1,6 +1,6 @@
 """This module contains the top level API functions for the deployment engine API"""
 
-from src import create_exec_graph, run_exec_graph
+from src import create_exec_graph, run_exec_graph, get_exec_graph_status
 from src.error_handling import HttpCodes, CustomError, get_error_source
 
 
@@ -20,11 +20,12 @@ def create_execution_graph(json_def:dict):
     except Exception as error:
         # Catch unknown errors
         filename, line = get_error_source()
-        raise CustomError(
+        # Raise soft error
+        CustomError(
             message="An unknown error occured, please contact an admin",
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
             logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
-        ) from error
+        ) 
 
 
 def run_execution_graph(model_name:str):
@@ -43,9 +44,25 @@ def run_execution_graph(model_name:str):
     except Exception as error:
         # Catch unknown errors
         filename, line = get_error_source()
-        raise CustomError(
+        # Raise soft error
+        CustomError(
             message="An unknown error occured, please contact an admin",
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
             logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
-        ) from error
-        
+        )
+
+
+def get_execution_status(execution_id:str):
+    """
+    Top level API function for getting status of an execution graph
+    Inputs
+        - execution_id (str) execution identifier
+    Output
+        - (json) description of execution
+    """
+    get_exec_graph_status.get_exec_graph_status(execution_id)
+
+
+if __name__ == "__main__":
+    print(get_exec_graph_status.get_exec_graph_status("busbox-ncqvn"))
+    

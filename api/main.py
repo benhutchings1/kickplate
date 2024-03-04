@@ -60,9 +60,17 @@ def get_execution_status(execution_id:str):
     Output
         - (json) description of execution
     """
-    get_exec_graph_status.get_exec_graph_status(execution_id)
-
-
-if __name__ == "__main__":
-    print(get_exec_graph_status.get_exec_graph_status("busbox-ncqvn"))
-    
+    try:
+        get_exec_graph_status.get_exec_graph_status(execution_id)
+    except CustomError:
+        # Feedback about known errors
+        pass
+    except Exception as error:
+        # Catch unknown errors
+        filename, line = get_error_source()
+        # Raise soft error
+        CustomError(
+            message="An unknown error occured, please contact an admin",
+            error_code=HttpCodes.INTERNAL_SERVER_ERROR,
+            logging_message=f"Error: {type(error)} File:{filename} Laine:{line}"
+        )

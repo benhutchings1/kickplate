@@ -6,6 +6,7 @@ from os import path
 class CustomError(Exception):
     def __init__(self, error_code, message=None, logging_message=None) -> None:        
         self.message = message
+        # Create exception with message
         super().__init__(message)
         
         # Check error code
@@ -33,11 +34,12 @@ class CustomError(Exception):
         if logging_message is None:
             self.logging_message = message
         
-        # While logging not setup, print message
+        # TODO: While logging not setup, print message
         print(logging_message)
 
 
 class HttpCodes(Enum):
+    """Accepted HTTP Codes"""
     OK=200
     CREATED=201
     ACCEPTED=202
@@ -50,14 +52,16 @@ class HttpCodes(Enum):
     TOO_MANY_REQUESTS=429
 
 
+# Leave in error_handling to avoid circular import issues
 def get_error_source() -> tuple[str, str]:
+    """Error utility function to get parent caller in stack trace"""
     try:
         # Get file and line of caller from stack trace
         stack_item = list(extract_stack())[-3]
         __, filename = path.split(stack_item.filename)
         line = stack_item.lineno
     except IndexError:
-        # Try again if there is no grandparent called 
+        # Try again with parent if there is no grandparent called 
         # Get file and line of caller from stack trace
         stack_item = list(extract_stack())[-2]
         __, filename = path.split(stack_item.filename)

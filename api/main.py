@@ -14,15 +14,12 @@ async def create_execution_graph(graph_def:api_schemas.CreateExecGraphInput) -> 
     Inputs:\n
         - graph_def (JSON): JSON execution graph definition\n
     """
-    try:
-        # Return OK status
-        return JSONResponse(
-            status_code=HttpCodes.OK.value,
-            content=create_exec_graph.create_exec_graph(graph_def)
-        )
-    except Exception as e:
-        # Handle error types
-        return error_handler(e)
+   
+    # Return OK status
+    return JSONResponse(
+        status_code=HttpCodes.OK.value,
+        content=create_exec_graph.create_exec_graph(graph_def)
+    )
     
 
 @app.post("/run_graph/{model_name}")
@@ -34,15 +31,12 @@ async def run_execution_graph(model_name:str) -> api_schemas.RunExecGraphOutput:
     Output\n
         - execution_id (str): Unique execution identifier\n
     """
-    try:
-        # Run execution graph
-        return JSONResponse(
-            status_code=HttpCodes.OK.value,
-            content=run_exec_graph.run_execution_graph(model_name)
-        )
-    except Exception as e:
-        # Handle error types
-        return error_handler(e)
+    # Run execution graph
+    return JSONResponse(
+        status_code=HttpCodes.OK.value,
+        content=run_exec_graph.run_execution_graph(model_name)
+    )
+
 
 
 @app.get("/get_status/{execution_id}")
@@ -54,18 +48,15 @@ async def get_execution_status(execution_id:str) -> api_schemas.ExecGraphStatusO
     Output\n
         - execution_description (json): description of execution\n
     """
-    try:
-        return JSONResponse(
-            status_code=HttpCodes.OK.value,
-            content=get_exec_graph_status.get_exec_graph_status(execution_id)
-        )
-    except Exception as e:
-        # Handle error types
-        return error_handler(e)
+    return JSONResponse(
+        status_code=HttpCodes.OK.value,
+        content=get_exec_graph_status.get_exec_graph_status(execution_id)
+    )
 
 
 @app.get("/")
 async def health_check() -> None:
+    """Health check for getting API status"""
     return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
 
 
@@ -75,3 +66,8 @@ def custom_error_handler(__:Request, exc:CustomError) -> api_schemas.ErrorStatus
         status_code=exc.error_code.value,
         content={"error": exc.message}
     )
+
+
+@app.exception_handler(Exception)
+def all_exception_handler(__:Request, exc:Exception):
+    error_handler(exc)

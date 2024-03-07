@@ -1,13 +1,13 @@
 from enum import Enum
 from traceback import extract_stack
 from os import path
+from fastapi import status
+from fastapi.responses import JSONResponse
 
 
 class CustomError(Exception):
     def __init__(self, error_code, message=None, logging_message=None) -> None:        
         self.message = message
-        # Create exception with message
-        super().__init__(message)
         
         # Check error code
         if not isinstance(error_code, HttpCodes):
@@ -35,21 +35,24 @@ class CustomError(Exception):
             self.logging_message = message
         
         # TODO: While logging not setup, print message
-        print(logging_message)
+
+    
+    def __str__(self) -> str:
+        return self.message
 
 
 class HttpCodes(Enum):
     """Accepted HTTP Codes"""
-    OK=200
-    CREATED=201
-    ACCEPTED=202
-    USER_ERROR=400
-    USER_UNAUTHORISED=401
-    NOT_FOUND=404
-    CONFLICT=409
-    INTERNAL_SERVER_ERROR=500
-    TOO_LARGE=413
-    TOO_MANY_REQUESTS=429
+    OK=status.HTTP_200_OK
+    CREATED=status.HTTP_201_CREATED
+    ACCEPTED=status.HTTP_202_ACCEPTED
+    USER_ERROR=status.HTTP_400_BAD_REQUEST
+    USER_UNAUTHORISED=status.HTTP_401_UNAUTHORIZED
+    NOT_FOUND=status.HTTP_404_NOT_FOUND
+    CONFLICT=status.HTTP_409_CONFLICT
+    INTERNAL_SERVER_ERROR=status.HTTP_500_INTERNAL_SERVER_ERROR
+    TOO_LARGE=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    TOO_MANY_REQUESTS=status.HTTP_429_TOO_MANY_REQUESTS
 
 
 # Leave in error_handling to avoid circular import issues
@@ -68,3 +71,19 @@ def get_error_source() -> tuple[str, str]:
         line = stack_item.lineno
     
     return (filename, line)
+
+
+def error_handler(error: Exception):
+    if isinstance(error, CustomError):
+        raise error
+    else:
+        # Catch unknown errors
+        filename, line = get_error_source()
+        # Raise soft error
+        e = CustomError(
+            message="An unknown error occured, please contact an admin",
+            error_code=HttpCodes.INTERNAL_SERVER_ERROR.value,
+            logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
+        ) 
+        # Format error
+        raise e

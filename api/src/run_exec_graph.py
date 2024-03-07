@@ -10,11 +10,7 @@ from src.config import config
 
 def run_execution_graph(graph_name) -> str:
     # Get graph defintion from cluster
-    graph_def = get_graph_definition(
-        graph_name,
-        api_version=config.get("execgraph", "api_version"),
-        namespace=config.get("kube_config", "namespace")
-    )
+    graph_def = get_graph_definition(graph_name)
 
     # generate workflow
     workflow = generate_workflow(graph_name, graph_def)
@@ -27,7 +23,6 @@ def get_graph_definition(graph_name) -> dict:
     # Get model graphs resource
     resource_type:DynamicClient = utils.get_resource(api_version=config.get("execgraph", "api_version"),
                                                      kind=config.get("execgraph", "kind"))
-    
     try:
         resources:ResourceInstance = resource_type.get(namespace=config.get("kube_config", "namespace"))
     except Exception as e:

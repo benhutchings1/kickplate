@@ -5,7 +5,7 @@ import json
 from src import utils
 import re
 
-def create_exec_graph(json_def:dict) -> None:
+def create_exec_graph(json_def:dict) -> dict[str, str]:
     # Read in schema
     schema = utils.read_schema("config/exec_graph.schema.json")
 
@@ -28,6 +28,9 @@ def create_exec_graph(json_def:dict) -> None:
         namespace=config.get(section="kube_config", key="namespace"),
         api_version=config.get(section="exegraph", key="api_version")
     )
+    
+    # return model name
+    return {"model_name": json_def["graphname"]}
         
 
 def format_request(json_def:dict) -> dict:

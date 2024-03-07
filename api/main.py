@@ -1,76 +1,77 @@
 """This module contains the top level API functions for the deployment engine API"""
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas
+from src.error_handling import HttpCodes, error_handler, CustomError
 
-from src import create_exec_graph, run_exec_graph, get_exec_graph_status
-from src.error_handling import HttpCodes, CustomError, get_error_source
+# Start API
+app = FastAPI()
 
-
-def create_execution_graph(json_def:dict):
+@app.post("/create_graph")
+async def create_execution_graph(graph_def:api_schemas.CreateExecGraphInput) -> api_schemas.CreateExecGraphOutput:
     """
-    Top level API endpoint for submitting an execution graph
-    Inputs:
-        - json_def (dict) JSON execution graph definition
-    Outputs:
-        - Success/Error HTTP Code
-    """
-    try:
-        create_exec_graph.create_exec_graph(json_def)
-    except CustomError as e:
-        # Feedback about known errors
-        raise e
-    except Exception as error:
-        # Catch unknown errors
-        filename, line = get_error_source()
-        # Raise soft error
-        CustomError(
-            message="An unknown error occured, please contact an admin",
-            error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
-        ) 
-
-
-def run_execution_graph(model_name:str):
-    """
-    Top level API function for running an execution graph, defined in create_execution_graph
-    Inputs
-        - model_name (str) execution graph name
-    Output
-        - Unique execution identifier
+    Top level API endpoint for submitting an execution graph\n  
+    Inputs:\n
+        - graph_def (JSON): JSON execution graph definition\n
     """
     try:
-        run_exec_graph.run_execution_graph(model_name)
-    except CustomError:
-        # Feedback about known errors
-        pass
-    except Exception as error:
-        # Catch unknown errors
-        filename, line = get_error_source()
-        # Raise soft error
-        CustomError(
-            message="An unknown error occured, please contact an admin",
-            error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
+        # Return OK status
+        return JSONResponse(
+            status_code=HttpCodes.OK.value,
+            content=create_exec_graph.create_exec_graph(graph_def)
         )
+    except Exception as e:
+        # Handle error types
+        return error_handler(e)
+    
 
-
-def get_execution_status(execution_id:str):
+@app.post("/run_graph/{model_name}")
+async def run_execution_graph(model_name:str) -> api_schemas.RunExecGraphOutput:
     """
-    Top level API function for getting status of an execution graph
-    Inputs
-        - execution_id (str) execution identifier
-    Output
-        - (json) description of execution
+    Top level API function for running an execution graph, defined in create_execution_graph\n
+    Inputs\n
+        - model_name (str): execution graph name\n
+    Output\n
+        - execution_id (str): Unique execution identifier\n
     """
     try:
-        get_exec_graph_status.get_exec_graph_status(execution_id)
-    except CustomError:
-        # Feedback about known errors
-        pass
-    except Exception as error:
-        # Catch unknown errors
-        filename, line = get_error_source()
-        # Raise soft error
-        CustomError(
-            message="An unknown error occured, please contact an admin",
-            error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error: {type(error)} File:{filename} Laine:{line}"
+        # Run execution graph
+        return JSONResponse(
+            status_code=HttpCodes.OK.value,
+            content=run_exec_graph.run_execution_graph(model_name)
         )
+    except Exception as e:
+        # Handle error types
+        return error_handler(e)
+
+
+@app.get("/get_status/{execution_id}")
+async def get_execution_status(execution_id:str) -> api_schemas.ExecGraphStatusOutput:
+    """
+    Top level API function for getting status of an execution graph\n
+    Inputs\n
+        - execution_id (str): execution identifier\n
+    Output\n
+        - execution_description (json): description of execution\n
+    """
+    try:
+        return JSONResponse(
+            status_code=HttpCodes.OK.value,
+            content=get_exec_graph_status.get_exec_graph_status(execution_id)
+        )
+    except Exception as e:
+        # Handle error types
+        return error_handler(e)
+
+
+@app.get("/")
+async def health_check() -> None:
+    return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
+
+
+@app.exception_handler(CustomError)
+def custom_error_handler(__:Request, exc:CustomError) -> api_schemas.ErrorStatusOutput:
+    return JSONResponse(
+        status_code=exc.error_code.value,
+        content={"error": exc.message}
+    )

@@ -1,11 +1,8 @@
 """This module contains the top level API functions for the deployment engine API"""
-from typing import Coroutine, Callable, Any
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from fastapi.routing import APIRoute, APIRouter
-from starlette.responses import Response
 from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas
-from src.error_handling import HttpCodes, error_handler, catch_all_exceptions
+from src.error_handling import HttpCodes, catch_all_exceptions
 import uvicorn
 
 # Start API

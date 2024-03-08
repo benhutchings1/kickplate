@@ -66,15 +66,5 @@ async def health_check() -> None:
     return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
 
 
-# @app.exception_handler(Exception)
-# def all_exception_handler(__:Request, exc:Exception):
-#     formatted_error = error_handler(exc)
-
-#     return JSONResponse(
-#         status_code=formatted_error.error_code.value,
-#         content={"error": formatted_error.message}
-#     )
-
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host="localhost", port=8000, reload=True)

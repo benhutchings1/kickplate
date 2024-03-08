@@ -3,39 +3,40 @@ from traceback import extract_stack
 from os import path
 from fastapi import status
 from fastapi.responses import JSONResponse
+from fastapi import Request
 
 
 class CustomError(Exception):
     def __init__(self, error_code, message=None, logging_message=None) -> None:        
         self.message = message
+        self.logging_message = logging_message
         
         # Check error code
         if not isinstance(error_code, HttpCodes):
             # Get file and line of caller from stack trace
             filename, line = get_error_source()
-            # Raise error
-            raise CustomError(
-                error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-                logging_message=f"File: {filename} Line: {line} tried to use non enumerated error code [{error_code}]"
-            )
+            
+            # Alter error to match new error
+            self.error_code = HttpCodes.INTERNAL_SERVER_ERROR
+            self.logging_message=f"File: {filename} Line: {line} tried to use non enumerated error code [{error_code}]"
+
         self.error_code = error_code
         
         # Set error message if internal server error, but require internal logging message
         if self.message is None and error_code is HttpCodes.INTERNAL_SERVER_ERROR:
-            if logging_message is None:
-                raise CustomError(
-                    error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-                    logging_message=f"File: {filename} Line: {line} raised internal server error without an logging message"
-                )
+            if self.logging_message is None:
+                self.error_code=HttpCodes.INTERNAL_SERVER_ERROR,
+                self.logging_message=f"File: {filename} Line: {line} raised internal server error without an logging message"
+
             self.message = "Internal server error"
         
         
         # if no logging message is given then revert to using main message
-        if logging_message is None:
+        if self.logging_message is None:
             self.logging_message = message
         
         # TODO: While logging not setup, print message
-
+        print("LOGGING MESSAGE: ", self.logging_message)
     
     def __str__(self) -> str:
         return self.message
@@ -75,15 +76,24 @@ def get_error_source() -> tuple[str, str]:
 
 def error_handler(error: Exception):
     if isinstance(error, CustomError):
-        raise error
+        return error
     else:
         # Catch unknown errors
         filename, line = get_error_source()
         # Raise soft error
-        e = CustomError(
-            message="An unknown error occured, please contact an admin",
-            error_code=HttpCodes.INTERNAL_SERVER_ERROR.value,
+        return CustomError(
+            message="An unexpected error occured, please contact an admin",
+            error_code=HttpCodes.INTERNAL_SERVER_ERROR,
             logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
         ) 
-        # Format error
-        raise e
+
+
+async def catch_all_exceptions(request: Request, call_next):
+    try:
+        return await call_next(request)
+    except Exception as exc:
+        formatted_error = error_handler(exc)
+        return JSONResponse(
+            status_code=formatted_error.error_code.value,
+            content={"error": formatted_error.message}
+        )

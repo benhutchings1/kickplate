@@ -1,11 +1,17 @@
 """This module contains the top level API functions for the deployment engine API"""
+from typing import Coroutine, Callable, Any
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute, APIRouter
+from starlette.responses import Response
 from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas
-from src.error_handling import HttpCodes, error_handler, CustomError
+from src.error_handling import HttpCodes, error_handler, catch_all_exceptions
+import uvicorn
 
 # Start API
 app = FastAPI()
+app.middleware('http')(catch_all_exceptions)
+
 
 @app.post("/create_graph")
 async def create_execution_graph(graph_def:api_schemas.CreateExecGraphInput) -> api_schemas.CreateExecGraphOutput:
@@ -60,14 +66,15 @@ async def health_check() -> None:
     return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
 
 
-@app.exception_handler(CustomError)
-def custom_error_handler(__:Request, exc:CustomError) -> api_schemas.ErrorStatusOutput:
-    return JSONResponse(
-        status_code=exc.error_code.value,
-        content={"error": exc.message}
-    )
+# @app.exception_handler(Exception)
+# def all_exception_handler(__:Request, exc:Exception):
+#     formatted_error = error_handler(exc)
+
+#     return JSONResponse(
+#         status_code=formatted_error.error_code.value,
+#         content={"error": formatted_error.message}
+#     )
 
 
-@app.exception_handler(Exception)
-def all_exception_handler(__:Request, exc:Exception):
-    error_handler(exc)
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)

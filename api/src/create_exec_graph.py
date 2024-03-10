@@ -7,7 +7,7 @@ import re
 
 def create_exec_graph(json_def:dict) -> dict[str, str]:
     # Read in schema
-    schema = utils.read_schema("config/exec_graph.schema.json")
+    schema = utils.read_schema()
 
     # Check validity from schema, will raise error if invalid
     utils.validate_against_schema(json_schema=schema,

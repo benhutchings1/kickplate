@@ -52,8 +52,8 @@ def generate_workflow(graph_name:str, step_definitions:list[dict]) -> dict:
     # Generate name
     
     return {
-            "apiVersion": config.get("workflows", "api_version"),
-            "kind": config.get("workflows", "kind"),
+            "apiVersion": config.get("workflow", "api_version"),
+            "kind": config.get("workflow", "kind"),
             "metadata": {
             "name": generate_name_suffix(graph_name, length=5)
             },
@@ -100,7 +100,7 @@ def submit_workflow(workflow:dict[str]) -> str:
             group=config.get("workflow", "group"),
             version=config.get("workflow", "version"),
             plural=config.get("workflow", "plural"),
-            namespace=config.get("workflow", "namespace"),
+            namespace=config.get("kube_config", "namespace"),
             body=workflow
         )
         return workflow['metadata']['name']

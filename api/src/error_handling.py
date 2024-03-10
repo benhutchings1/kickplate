@@ -14,7 +14,7 @@ class CustomError(Exception):
         # Check error code
         if not isinstance(error_code, HttpCodes):
             # Get file and line of caller from stack trace
-            filename, line = get_error_source()
+            filename, line = get_error_source(4)
             
             # Alter error to match new error
             self.error_code = HttpCodes.INTERNAL_SERVER_ERROR
@@ -25,6 +25,7 @@ class CustomError(Exception):
         # Set error message if internal server error, but require internal logging message
         if self.message is None and error_code is HttpCodes.INTERNAL_SERVER_ERROR:
             if self.logging_message is None:
+                filename, line = get_error_source(6)
                 self.error_code=HttpCodes.INTERNAL_SERVER_ERROR,
                 self.logging_message=f"File: {filename} Line: {line} raised internal server error without an logging message"
 
@@ -57,17 +58,17 @@ class HttpCodes(Enum):
 
 
 # Leave in error_handling to avoid circular import issues
-def get_error_source() -> tuple[str, str]:
-    """Error utility function to get parent caller in stack trace"""
+def get_error_source(depth:int=3) -> tuple[str, str]:
+    """Error utility function to get n_depth caller in stack trace"""
     try:
         # Get file and line of caller from stack trace
-        stack_item = list(extract_stack())[-3]
+        stack_item = list(extract_stack())[-1 * depth]
         __, filename = path.split(stack_item.filename)
         line = stack_item.lineno
     except IndexError:
         # Try again with parent if there is no grandparent called 
         # Get file and line of caller from stack trace
-        stack_item = list(extract_stack())[-2]
+        stack_item = list(extract_stack())[-1 * (depth + 1)]
         __, filename = path.split(stack_item.filename)
         line = stack_item.lineno
     
@@ -79,12 +80,12 @@ def error_handler(error: Exception):
         return error
     else:
         # Catch unknown errors
-        filename, line = get_error_source()
+        filename, line = get_error_source(4)
         # Raise soft error
         return CustomError(
             message="An unexpected error occured, please contact an admin",
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error: {type(error)} File:{filename} Line:{line}"
+            logging_message=f"[Error: {type(error)} File:{filename} Line:{line}] Message: {str(error)}"
         ) 
 
 

@@ -1,21 +1,30 @@
 """This module contains the top level API functions for the deployment engine API"""
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
+from typing import Annotated
 from fastapi.responses import JSONResponse
-from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas
+from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas, auth
 from src.error_handling import HttpCodes, catch_all_exceptions
 import uvicorn
 
 # Start API
 app = FastAPI()
+# Add auth checker
+app.middleware('http')(auth.check_auth)
+# Exception catcher
 app.middleware('http')(catch_all_exceptions)
 
 
 @app.post("/create_graph")
-async def create_execution_graph(graph_def:api_schemas.CreateExecGraphInput) -> api_schemas.CreateExecGraphOutput:
+async def create_execution_graph(
+    # graph_def:api_schemas.CreateExecGraphInput,
+    graph_def:dict,
+    token:Annotated[str, Header()]
+    ) -> api_schemas.CreateExecGraphOutput:
     """
     Top level API endpoint for submitting an execution graph\n  
     Inputs:\n
         - graph_def (JSON): JSON execution graph definition\n
+        - token (str): Bearer token provided by Azure Entra ID\n
     """
    
     # Return OK status
@@ -26,11 +35,15 @@ async def create_execution_graph(graph_def:api_schemas.CreateExecGraphInput) -> 
     
 
 @app.post("/run_graph/{model_name}")
-async def run_execution_graph(model_name:str) -> api_schemas.RunExecGraphOutput:
+async def run_execution_graph(
+    model_name:str,
+    token:Annotated[str, Header()]
+    ) -> api_schemas.RunExecGraphOutput:
     """
     Top level API function for running an execution graph, defined in create_execution_graph\n
     Inputs\n
         - model_name (str): execution graph name\n
+        - token (str): Bearer token provided by Azure Entra ID
     Output\n
         - execution_id (str): Unique execution identifier\n
     """
@@ -43,11 +56,15 @@ async def run_execution_graph(model_name:str) -> api_schemas.RunExecGraphOutput:
 
 
 @app.get("/get_status/{execution_id}")
-async def get_execution_status(execution_id:str) -> api_schemas.ExecGraphStatusOutput:
+async def get_execution_status(
+    execution_id:str,
+    token:Annotated[str, Header()]
+    ) -> api_schemas.ExecGraphStatusOutput:
     """
     Top level API function for getting status of an execution graph\n
     Inputs\n
         - execution_id (str): execution identifier\n
+        - token (str): Bearer token provided by Azure Entra ID
     Output\n
         - execution_description (json): description of execution\n
     """

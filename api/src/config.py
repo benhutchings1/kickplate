@@ -33,9 +33,16 @@ class Config:
         for section in ["workflow", "execgraph"]:
             self.__meta_dict[section]["api_version"] = \
                 self.__meta_dict[section]["group"] + "/" + self.__meta_dict[section]["version"]
+        
+        # Auth config URLs
+        self.__meta_dict["auth"]["open_id_config_url"] = f"https://login.microsoftonline.com/{self.get('auth', 'tenant_id')}\
+            /v2.0/.well-known/openid-configuration"
+        self.__meta_dict["auth"]["issuer_url"] = f"https://sts.windows.net/{self.get('auth', 'tenant_id')}/"
+        self.__meta_dict["auth"]["audience"] = f"api://{self.get('auth', 'client_id')}"
 
     
     def get(self, section:str, key:str) -> str:
+        '''Given section and key, get from metadict'''
         # Check for section
         if section in self.__meta_dict:
             # Check for key

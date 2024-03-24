@@ -1,9 +1,9 @@
 from enum import Enum
 from traceback import extract_stack
 from os import path
-from fastapi import status
+from fastapi import status, Request
 from fastapi.responses import JSONResponse
-from fastapi import Request
+from fastapi.security import OAuth2PasswordBearer
 
 
 class CustomError(Exception):
@@ -76,6 +76,7 @@ def get_error_source(depth:int=3) -> tuple[str, str]:
 
 
 def error_handler(error: Exception):
+    '''Handle general exceptions and reraise as CustomError'''
     if isinstance(error, CustomError):
         return error
     else:
@@ -90,6 +91,7 @@ def error_handler(error: Exception):
 
 
 async def catch_all_exceptions(request: Request, call_next):
+    '''Add top level exception handler'''
     try:
         return await call_next(request)
     except Exception as exc:

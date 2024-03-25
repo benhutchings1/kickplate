@@ -17,8 +17,8 @@ WHITELIST_ROUTES = [
 ]
 
 
-async def check_auth(request: Request, call_next):
-    '''Check for bearer token on non-whitelisted routes'''
+async def check_auth(request: Request, call_next) -> None:
+    '''Check for valid bearer token on non-whitelisted routes'''
     # Check for whitelisted routes request
     if request.scope['path'] in WHITELIST_ROUTES:
         return await call_next(request)
@@ -32,12 +32,21 @@ async def check_auth(request: Request, call_next):
                 {request.scope['path']} without a token")
     
     # Verify token
-    verify_token(str(request.headers["token"]))
-    
+    token_contents = verify_token(str(request.headers["token"]))
+
+    # Check group membership
+    if not config.get("auth", "group_id") in token_contents["groups"]:
+        raise CustomError(
+            error_code=HttpCodes.USER_UNAUTHORISED,
+            message="User not member of security group",
+            logging_message=f"IP: {request.client.host} tried to access \
+                {request.scope['path']} but isn't a member"            
+        )
+        
     return await call_next(request)
 
 
-def verify_token(token):
+def verify_token(token:str) -> dict[str, str]:
     # Get config options
     open_id_config_url = config.get("auth", "open_id_config_url")
     audience = config.get("auth", "audience")
@@ -78,7 +87,8 @@ def verify_token(token):
         )
         
         
-def __get_rsa_key(token, open_id_config_url):
+def __get_rsa_key(token:str, open_id_config_url:str) -> RSAPublicNumbers:
+    '''Converts public key from token header into RSA key'''
     # Get headers of JWT token
     unverified_headers = __get_jwt_headers(token)
     # Get key ID from headers
@@ -113,31 +123,31 @@ def __get_rsa_key(token, open_id_config_url):
     })
 
 
-def __get_jwt_headers(jwt_token):
+def __get_jwt_headers(jwt_token:str) -> dict[str, str]:
     '''Decode unverified JWT header'''
     header = jwt_token.split(".")[0]
     return json.loads(base64.b64decode(header).decode("utf-8"))
 
 
-def __request_url_contents(url):
+def __request_url_contents(url) -> dict[str, str]:
     '''Gets JSON response from given URL (Cached)'''
     return json.loads(requests.get(url).content)
 
 
-def __ensure_bytes(key):
+def __ensure_bytes(key) -> str:
     '''Ensure UTF-8 encoding of string'''
     if isinstance(key, str):
         key = key.encode('utf-8')
     return key
 
 
-def __decode_value(val):
+def __decode_value(val) -> int:
     '''Decode from Base64 to int'''
     decoded = base64.urlsafe_b64decode(__ensure_bytes(val) + b'==')
     return int.from_bytes(decoded, 'big')
 
 
-def __rsa_pem_from_jwk(jwk):
+def __rsa_pem_from_jwk(jwk) -> RSAPublicNumbers:
     '''Format JWK as RSA Pub Number, PEM format'''
     return RSAPublicNumbers(
         n=__decode_value(jwk['n']),

@@ -1,5 +1,6 @@
 from src.config import config
 from src.error_handling import CustomError, HttpCodes
+from src.logger import LoggingLevel, Loggers
 from fastapi import Request
 import jwt
 import json
@@ -13,7 +14,8 @@ import base64
 WHITELIST_ROUTES = [
     "/",            # Health check
     "/docs",        # Swagger docs
-    "/openapi.json" # Swagger docs requirements
+    "/openapi.json",# Swagger docs requirements
+    "/favicon.ico"  # Favicon
 ]
 
 
@@ -29,7 +31,10 @@ async def check_auth(request: Request, call_next) -> None:
             error_code=HttpCodes.USER_UNAUTHORISED,
             message="Bearer token required",
             logging_message=f"IP: {request.client.host} tried to access \
-                {request.scope['path']} without a token")
+                {request.scope['path']} without a token",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
+            )
     
     # Verify token
     token_contents = verify_token(str(request.headers["token"]))
@@ -40,7 +45,9 @@ async def check_auth(request: Request, call_next) -> None:
             error_code=HttpCodes.USER_UNAUTHORISED,
             message="User not member of security group",
             logging_message=f"IP: {request.client.host} tried to access \
-                {request.scope['path']} but isn't a member"            
+                {request.scope['path']} but isn't a member",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
         )
         
     return await call_next(request)
@@ -69,21 +76,27 @@ def verify_token(token:str) -> dict[str, str]:
         raise CustomError(
             error_code=HttpCodes.USER_UNAUTHORISED,
             logging_message=f"Error decoding key, message: {repr(ite)}",
-            message="Invalid token"
+            message="Invalid token",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
         )
     except jwt.exceptions.ExpiredSignatureError as ese:
         # Handle out of date token
         raise CustomError(
             error_code=HttpCodes.USER_UNAUTHORISED,
             logging_message=f"Token out of date, message: {repr(ese)}",
-            message="Token out of date"
+            message="Token out of date",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
         )
     except Exception as ge:
         # General error handler
         raise CustomError(
             error_code=HttpCodes.USER_UNAUTHORISED,
             logging_message=f"General token invalid error; type: {type(ge)}; message: {repr(ge)}",
-            message="Error validating token"
+            message="Error validating token",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
         )
         
         
@@ -110,7 +123,9 @@ def __get_rsa_key(token:str, open_id_config_url:str) -> RSAPublicNumbers:
         raise CustomError(
             error_code=HttpCodes.USER_UNAUTHORISED,
             message=f"Invalid bearer token",
-            logging_message=f"{kid} not found in keyset"
+            logging_message=f"{kid} not found in keyset",
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.SECURITY
         )
     
     # Format public JWK as RSA PEM

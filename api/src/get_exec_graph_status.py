@@ -4,6 +4,7 @@ from kubernetes.client.exceptions import ApiException
 from src import utils
 from src.error_handling import CustomError, HttpCodes
 from src.config import config
+from src.logger import LoggingLevel, Loggers
 
 
 def get_exec_graph_status(execution_id:str):
@@ -41,8 +42,10 @@ def get_execution_description(execution_id:str):
         if json.loads(e.body)["code"] == 404:
             raise CustomError(
                 message=f"Graph: {execution_id} not found",
-                error_code=HttpCodes.NOT_FOUND
-            ) from None 
+                error_code=HttpCodes.NOT_FOUND,
+                logger=Loggers.USER_ERROR,
+                logging_level=LoggingLevel.INFO
+            )
         else:
             # Unknown error, let top level error handler capture it
             raise e

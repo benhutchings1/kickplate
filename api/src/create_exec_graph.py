@@ -1,6 +1,7 @@
 from kubernetes.client.exceptions import ApiException
 from src.error_handling import CustomError, HttpCodes
 from src.config import config
+from src.logger import LoggingLevel, Loggers
 import json
 from src import utils
 import re
@@ -49,8 +50,10 @@ def format_request(json_def:dict) -> dict:
     except KeyError as e:
         raise CustomError(
             message=f"Data {e} missing from graph definition",
-            error_code=HttpCodes.USER_ERROR
-            ) from None
+            error_code=HttpCodes.USER_ERROR,
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.USER_ERROR
+            )
 
 
 def validate_name(execgraph_name:str) -> None:
@@ -60,8 +63,10 @@ def validate_name(execgraph_name:str) -> None:
         raise CustomError(
             message=f"graph name [{execgraph_name}] \
                 must consist of lower case alphanumeric characters, '-', or '.', and must start/end with an alphanumeric character",
-            error_code=HttpCodes.USER_ERROR
-        ) from None
+            error_code=HttpCodes.USER_ERROR,
+            logging_level=LoggingLevel.INFO,
+            logger=Loggers.USER_ERROR
+        ) 
 
 
 def submit_execgraph(exec_graph:dict) -> None:
@@ -78,8 +83,10 @@ def submit_execgraph(exec_graph:dict) -> None:
         if str(json.loads(e.body)["code"]) == str(409):
             raise CustomError(
                 message=f"{exec_graph['metadata']['name']} already exists",
-                error_code=HttpCodes.CONFLICT
-            ) from e 
+                error_code=HttpCodes.CONFLICT,
+                logger=Loggers.USER_ERROR,
+                logging_level=LoggingLevel.INFO
+            )
         else:
             # Unknown error, let top level error handler capture it
             raise e

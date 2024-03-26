@@ -7,6 +7,7 @@ from kubernetes.dynamic.exceptions import ApiException
 from src import utils
 from src.error_handling import CustomError, HttpCodes
 from src.config import config
+from src.logger import LoggingLevel, Loggers
 
 def run_execution_graph(graph_name) -> str:
     # Get graph defintion from cluster
@@ -28,7 +29,8 @@ def get_graph_definition(graph_name) -> dict:
     except Exception as e:
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Tried to get graph resource, message: {e.__repr__()}"
+            logging_message=f"Tried to get graph resource, message: {e.__repr__()}",
+            logging_level=LoggingLevel.WARNING
         )
     
     # Search for graph    
@@ -38,7 +40,9 @@ def get_graph_definition(graph_name) -> dict:
     
     raise CustomError(
         message="execution graph '{graph_name}' not found",
-        error_code=HttpCodes.USER_ERROR
+        error_code=HttpCodes.USER_ERROR,
+        logger=Loggers.USER_ERROR,
+        logging_level=LoggingLevel.INFO
     )
     
     
@@ -109,8 +113,10 @@ def submit_workflow(workflow:dict[str]) -> str:
         if json.loads(e.body)["code"] == 409:
             raise CustomError(
                 error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-                logging_message=f"'{workflow['metadata']['name']}' already exists"
-            ) from None 
+                logging_message=f"'{workflow['metadata']['name']}' already exists",
+                logger=Loggers.USER_ERROR,
+                logging_level=LoggingLevel.INFO
+            )
         else:
             # Unknown error, let top level error handler capture it
             raise e

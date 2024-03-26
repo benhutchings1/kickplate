@@ -1,10 +1,11 @@
 import configparser as cfgparse
 from src.error_handling import CustomError, HttpCodes
+from src.logger import Loggers, LoggingLevel
 
 # Config location
 CONFIG_PATH = "config/connection.ini"
 
-class Config:
+class __Config:
     """
     Class to retrieve config values from CONFIG_PATH file
     """
@@ -50,9 +51,10 @@ class Config:
                 return self.__meta_dict[section][key]
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error getting config option section: {section} key: {key}"
+            logging_message=f"Error getting config option section: {section} key: {key}",
+            logging_level=LoggingLevel.WARNING
         )
         
 # Load on app start           
-config = Config()
+config = __Config()
  

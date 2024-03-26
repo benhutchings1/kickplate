@@ -5,6 +5,7 @@ from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 from src.error_handling import CustomError, HttpCodes
 from src.config import config
+from src.logger import LoggingLevel, Loggers
 
 
 def validate_against_schema(json_schema:dict, json_def:str) -> tuple[bool, str]:
@@ -15,8 +16,10 @@ def validate_against_schema(json_schema:dict, json_def:str) -> tuple[bool, str]:
         # Invalid schema
         raise CustomError(
             message=f"Invalid execution graph input, schema error message: {e.message}",
-            error_code=HttpCodes.USER_ERROR
-        ) from None
+            error_code=HttpCodes.USER_ERROR,
+            logger=Loggers.USER_ERROR,
+            logging_level=LoggingLevel.INFO
+        ) 
 
 
 def read_schema() -> dict:
@@ -28,12 +31,14 @@ def read_schema() -> dict:
     except FileNotFoundError:
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"File {path} not found"
+            logging_message=f"Schema File {path} not found",
+            logging_level=LoggingLevel.WARNING
         ) 
     except IOError:
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f""
+            logging_message=f"Error reading schema",
+            logging_level=LoggingLevel.WARNING
         ) 
 
 
@@ -44,7 +49,9 @@ def connect_to_kubenetes() -> DynamicClient:
     except Exception as e:
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=f"Error connecting to k8, error message {e.__repr__()}"
+            logging_message=f"Error connecting to k8, error message {e.__repr__()}",
+            # Critical as core functionality
+            logging_level=LoggingLevel.CRITICAL
         )
 
 def get_resource(api_version, kind) -> DynamicClient:
@@ -57,7 +64,8 @@ def get_resource(api_version, kind) -> DynamicClient:
     except Exception as e:
         raise CustomError(
             error_code=HttpCodes.INTERNAL_SERVER_ERROR,
-            logging_message=e.__repr__()
+            logging_message=f"Error getting resource Kind: {kind} Error: {e.__repr__()}",
+            logging_level=LoggingLevel.CRITICAL
         )
         
 def get_co_client_api() -> client.CustomObjectsApi:

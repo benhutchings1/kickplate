@@ -3,6 +3,11 @@ from enum import Enum
 import logging
 from datetime import date
 from src.backup_exception import BackupException
+from uvicorn.config import LOGGING_CONFIG
+import uvicorn
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
 
 # Logging types
 class LoggingLevel(Enum):
@@ -17,7 +22,7 @@ class LoggingLevel(Enum):
 class Loggers(Enum):
         '''Loggers and corresponding file'''
         SECURITY = "security.logs"
-        ACCESS = "access.logs"
+        SERVER = "server.logs"
         GENERAL = "general.logs"
         USER_ERROR = "user_error.logs"
 
@@ -145,7 +150,21 @@ class __APILogger():
         # Write to logs
         logging.log(level=logging_type.value, msg=message)
         
-    
+
 # SETUP LOGGER ON STARTUP
 api_logger = __APILogger()
 
+
+@asynccontextmanager
+async def modify_uvicorn_logging_config(app: FastAPI):
+    # Server handler
+    server_log = logging.FileHandler(
+        os.path.join(api_logger.log_path, Loggers.SERVER.value)
+    )
+    
+    # Add logfile handler to all loggers
+    for uvi_logger_name in [".access", ""]:
+        uvi_logger = logging.getLogger("uvicorn" + uvi_logger_name)
+        uvi_logger.addHandler(server_log)
+    
+    yield

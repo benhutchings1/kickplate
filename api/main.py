@@ -4,10 +4,12 @@ from typing import Annotated
 from fastapi.responses import JSONResponse
 from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas, auth
 from src.error_handling import HttpCodes, catch_all_exceptions
+from src.logger import modify_uvicorn_logging_config
 import uvicorn
 
+
 # Start API
-app = FastAPI()
+app = FastAPI(lifespan=modify_uvicorn_logging_config)
 # Add auth checker
 app.middleware('http')(auth.check_auth)
 # Exception catcher
@@ -78,7 +80,11 @@ async def get_execution_status(
 async def health_check() -> None:
     """Health check for getting API status"""
     return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
-
-
+       
+    
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="localhost",
+        port=8000
+    )

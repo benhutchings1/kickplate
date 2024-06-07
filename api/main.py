@@ -1,48 +1,65 @@
-"""This module contains the top level API functions for the deployment engine API"""
-from fastapi import FastAPI, Header
-from typing import Annotated
-from fastapi.responses import JSONResponse
-from src import create_exec_graph, run_exec_graph, get_exec_graph_status, api_schemas, auth
-from src.error_handling import HttpCodes, catch_all_exceptions
-from src.logger import modify_uvicorn_logging_config
 import uvicorn
+from fastapi import FastAPI, Depends
+from fastapi.responses import JSONResponse
+from typing import Annotated
+from config import ApiSettings
+from auth.auth_flow import oauth_scheme
+from com_utils.http import HttpCodes
+from com_utils.logger import modify_uvicorn_logging_config
+from com_utils.error_handling import catch_all_exceptions
 
+# Import routes functionality
+from routes.create_graph.create_exec_graph import (
+    CreateExecGraph,
+    ResponseModel as CreateGraphResponseModel,
+)
+from routes.graph_status.graph_status import GraphStatus
+from routes.graph_status.graph_status_model import (
+    GraphStatusModel as GraphStatusReponseModel,
+)
+from routes.run_graph.run_exec_graph import (
+    RunGraph,
+    ResponseModel as RunGraphResponseModel,
+)
 
-# Start API
-app = FastAPI(lifespan=modify_uvicorn_logging_config)
-# Add auth checker
-app.middleware('http')(auth.check_auth)
+app = FastAPI(
+    swagger_ui_init_oauth={
+        "appName": "deployment_engine",
+        "clientId": ApiSettings.auth_client_id,
+        "scopes": ApiSettings.auth_scope.split(" "),
+        "usePkceWithAuthorizationCodeGrant": True,
+    },
+    lifespan=modify_uvicorn_logging_config,
+)
 # Exception catcher
-app.middleware('http')(catch_all_exceptions)
+# app.middleware("http")(catch_all_exceptions)
 
 
-@app.post("/create_graph")
+@app.post("/graph/create_graph")
 async def create_execution_graph(
-    # graph_def:api_schemas.CreateExecGraphInput,
-    graph_def:dict,
-    token:Annotated[str, Header()]
-    ) -> api_schemas.CreateExecGraphOutput:
+    graph_def: dict, token: Annotated[str, Depends(oauth_scheme)]
+) -> CreateGraphResponseModel:
     """
-    Top level API endpoint for submitting an execution graph\n  
+    Top level API endpoint for submitting an execution graph\n
     Inputs:\n
         - graph_def (JSON): JSON execution graph definition\n
         - token (str): Bearer token provided by Azure Entra ID\n
     """
-   
+
     # Return OK status
     return JSONResponse(
         status_code=HttpCodes.OK.value,
-        content=create_exec_graph.create_exec_graph(graph_def)
+        content={"graphname": CreateExecGraph(graph_def)},
     )
-    
 
-@app.post("/run_graph/{model_name}")
+
+@app.post("/graph/{model_name}")
 async def run_execution_graph(
-    model_name:str,
-    token:Annotated[str, Header()]
-    ) -> api_schemas.RunExecGraphOutput:
+    model_name: str, token: Annotated[str, Depends(oauth_scheme)]
+) -> RunGraphResponseModel:
     """
-    Top level API function for running an execution graph, defined in create_execution_graph\n
+    Top level API function for running an execution graph,
+        defined in create_execution_graph\n
     Inputs\n
         - model_name (str): execution graph name\n
         - token (str): Bearer token provided by Azure Entra ID
@@ -51,16 +68,14 @@ async def run_execution_graph(
     """
     # Run execution graph
     return JSONResponse(
-        status_code=HttpCodes.OK.value,
-        content=run_exec_graph.run_execution_graph(model_name)
+        status_code=HttpCodes.OK.value, content={"execution_id": RunGraph(model_name)}
     )
 
 
-@app.get("/get_status/{execution_id}")
+@app.get("/graph/{execution_id}")
 async def get_execution_status(
-    execution_id:str,
-    token:Annotated[str, Header()]
-    ) -> api_schemas.ExecGraphStatusOutput:
+    execution_id: str, token: Annotated[str, Depends(oauth_scheme)]
+) -> GraphStatusReponseModel:
     """
     Top level API function for getting status of an execution graph\n
     Inputs\n
@@ -71,7 +86,7 @@ async def get_execution_status(
     """
     return JSONResponse(
         status_code=HttpCodes.OK.value,
-        content=get_exec_graph_status.get_exec_graph_status(execution_id)
+        content=GraphStatus(execution_id),
     )
 
 
@@ -79,11 +94,7 @@ async def get_execution_status(
 async def health_check() -> None:
     """Health check for getting API status"""
     return JSONResponse(status_code=HttpCodes.OK.value, content={"status": "ok"})
-       
-    
+
+
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="localhost",
-        port=8000
-    )
+    uvicorn.run("main:app", host="localhost", port=7000, reload=True)

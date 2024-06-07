@@ -1,0 +1,17 @@
+from enum import Enum
+from fastapi import status
+
+
+class HttpCodes(Enum):
+    """Accepted HTTP Codes"""
+
+    OK = status.HTTP_200_OK
+    CREATED = status.HTTP_201_CREATED
+    ACCEPTED = status.HTTP_202_ACCEPTED
+    USER_ERROR = status.HTTP_400_BAD_REQUEST
+    USER_UNAUTHORISED = status.HTTP_401_UNAUTHORIZED
+    NOT_FOUND = status.HTTP_404_NOT_FOUND
+    CONFLICT = status.HTTP_409_CONFLICT
+    INTERNAL_SERVER_ERROR = status.HTTP_500_INTERNAL_SERVER_ERROR
+    TOO_LARGE = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    TOO_MANY_REQUESTS = status.HTTP_429_TOO_MANY_REQUESTS

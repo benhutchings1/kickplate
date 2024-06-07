@@ -1,7 +1,6 @@
 variable "tenant_id" {
     type = string
     description = "Azure Entra ID tenant"
-    default = "301dacd7-60f1-42bf-84ce-a38206717103"
 }
 
 # Variables pulled from tfvars file

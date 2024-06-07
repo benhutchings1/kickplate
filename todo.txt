@@ -1,0 +1,43 @@
+api:
+    build dockerfile for api
+    testing
+        write test for schema checking
+    fix linting
+    class for kubernetes connection
+    convert config to environment variables
+    fix requirements
+    think about what doing with logs
+    write readme
+    create scheduled runner
+        m2m auth
+        cron jobs
+    write kubernetes instance to logs
+
+kubernetes:
+    fix paralellism
+    give pod environment variable of which pod it is
+        configmap?
+    add resource limits
+    set tshirt run capacities
+        - allow choice based on admin
+    deploy
+        clusters
+            deployment configs (dev prod)
+            setup managedidentity for m2m auth
+            setup namespaces and link clusters
+        api using helm
+        docker registry
+        key vault
+        front door
+            authorized IPs
+        storage account for logs/FTP server
+    make service account with secret
+
+github actions
+    deploy release
+    run tests
+
+other:
+    make dashboard
+    Costings
+    build example execution

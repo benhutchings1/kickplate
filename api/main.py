@@ -56,7 +56,6 @@ async def run_execution_graph(
     )
 
 
-
 @app.get("/get_status/{execution_id}")
 async def get_execution_status(
     execution_id:str,

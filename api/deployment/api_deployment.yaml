@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: control-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: control-api
+  template:
+    metadata:
+      labels:
+        app: control-api
+    spec:
+      containers:
+      - name: api-container
+        image: nginx:latest
+        ports:
+        - containerPort: 80

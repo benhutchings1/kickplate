@@ -26,6 +26,7 @@ class Loggers(Enum):
         GENERAL = "general.logs"
         USER_ERROR = "user_error.logs"
 
+
 class __APILogger():    
     def __init__(self) -> None:
         # Define locations

@@ -5,6 +5,7 @@ from typing import List
 
 class _ApiSettings(BaseSettings):
     # OAuth Config
+    auth_enable: bool = False
     auth_scope: str = "api://{{clientID}}/groups"
     auth_audience: str = "api://268da6d1-91b3-4cf6-88a8-90837d84d94d"
     auth_issuer: str = "https://sts.windows.net/301dacd7-60f1-42bf-84ce-a38206717103/"

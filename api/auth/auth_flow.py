@@ -33,6 +33,9 @@ class OAuthCodeFlow(OAuth2AuthorizationCodeBearer):
         self.token_validator = TokenValidator()
 
     async def __call__(self, request: Request) -> Coroutine[Any, Any, str | None]:
+        if not ApiSettings.auth_enable:
+            return super().__call__(request)
+
         # Check if path is whitelisted
         if request.scope["path"] in self.whitelisted_routes:
             return super().__call__(request)

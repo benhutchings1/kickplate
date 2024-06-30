@@ -18,7 +18,7 @@ spec:
               steps:
                 type: array
                 items:
-                  type: objectm
+                  type: object
                   additionalProperties: true
                   properties:
                     stepname:

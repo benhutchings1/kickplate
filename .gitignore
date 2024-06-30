@@ -1,4 +1,5 @@
 api/logs
+api/certs
 
 # Local .terraform directories
 **/.terraform/*

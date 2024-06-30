@@ -1,15 +1,17 @@
-import pytest
-from routes.create_graph.create_exec_graph import CreateExecGraph
-from fastapi.testclient import TestClient
-from unittest.mock import MagicMock
-from external.kubenetes import KubernetesConn
-from typing import Union, cast
 import json
+from typing import Union, cast
+from unittest.mock import MagicMock
+
+import pytest
+from fastapi.testclient import TestClient
+from kubernetes.client.exceptions import ApiException
+
+from app import app
 from com_utils.backup_exception import BackupException
 from com_utils.error_handling import CustomError
-from kubernetes.client.exceptions import ApiException
-from main import app
-
+from external.kubenetes import KubernetesConn
+from routes.create_graph.create_exec_graph import CreateExecGraph
+from tests.unit_tests.conftest import MockHTTPResponse, mock_k8s_factory
 
 GRAPH_TYPING = dict[str, Union[str, dict[str, Union[str, dict]]]]
 
@@ -64,26 +66,11 @@ def sample_formatted_graph_def(sample_graph_def: GRAPH_TYPING) -> GRAPH_TYPING:
     }
 
 
-@pytest.fixture
-def k8s_client() -> KubernetesConn:
-    client = KubernetesConn()
-    client.create_resource = MagicMock()
-    return client
-
-
-class MockK8s():
-    def create_resource(self, group, version, namespace, plural, body):
-        return
-
 def test_route_should_return_graph_name_on_correct_graph_definition(
-    test_client: TestClient,
-    sample_graph_def: GRAPH_TYPING,
+    test_client: TestClient, sample_graph_def: GRAPH_TYPING
 ):
-    app.dependency_overrides[KubernetesConn] = MockK8s
-    resp = test_client.post(
-        "/graph/create_graph",
-        json=sample_graph_def
-    )
+    app.dependency_overrides[KubernetesConn] = mock_k8s_factory(None)
+    resp = test_client.post("/graph/create_graph", json=sample_graph_def)
     assert json.loads(resp.content)["graphname"] == sample_graph_def["graphname"]
 
 
@@ -117,68 +104,60 @@ def test_should_send_correct_graph_definition_request(
     assert graph_name == sample_graph_def["graphname"]
 
 
-def test_should_raise_custom_error_on_failed_k8s_conn(
-    sample_graph_def: GRAPH_TYPING
-):
+def test_should_raise_custom_error_on_failed_k8s_conn(sample_graph_def: GRAPH_TYPING):
     with pytest.raises(BackupException):
         CreateExecGraph(KubernetesConn()).submit_graph(sample_graph_def)
 
 
 def test_should_raise_error_on_invalid_graph_name(
-    k8s_client: KubernetesConn,
-    sample_graph_def: GRAPH_TYPING
+    k8s_client: KubernetesConn, sample_graph_def: GRAPH_TYPING
 ):
     sample_graph_def["graphname"] = "@?%*ndsiuhndusajiodjsoSABDIA"
-    
+
     with pytest.raises(CustomError):
         CreateExecGraph(k8s_client).submit_graph(sample_graph_def)
-
-
-class FakeHTTPResponse:
-    def __init__(self, status=None, reason=None, data=None):
-        self.status = status
-        self.reason = reason
-        self.data = data
-
-    def getheaders(self):
-        return {"fakekey": "fakeval"}
 
 
 def test_should_raise_error_on_duplicate_graph_name(
     k8s_client: KubernetesConn,
     sample_graph_def: GRAPH_TYPING,
-):        
+):
     k8s_client.create_resource = cast(MagicMock, k8s_client.create_resource)
     k8s_client.create_resource.side_effect = ApiException(
-        http_resp=FakeHTTPResponse(409, "test", b'{"code": "409"}')
+        http_resp=MockHTTPResponse(409, "test", b'{"code": "409"}')
     )
-    
+
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(sample_graph_def)
 
+
 def test_should_raise_error_on_missing_graphname(k8s_client: KubernetesConn):
     bad_graph_def = {"thisis": "bad"}
-    
+
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(bad_graph_def)
-    
-    
+
+
 def test_should_raise_error_on_missing_steps(k8s_client: KubernetesConn):
     bad_graph_def = {"graphname": "bad"}
-    
+
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(bad_graph_def)
 
 
-def test_should_raise_error_on_bad_steps_definition_not_list(k8s_client: KubernetesConn):
+def test_should_raise_error_on_bad_steps_definition_not_list(
+    k8s_client: KubernetesConn,
+):
     bad_graph_def = {"graphname": "bad", "steps": {"thing": "notgood"}}
-    
+
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(bad_graph_def)
 
 
-def test_should_raise_error_on_bad_steps_definition_not_model_valid(k8s_client: KubernetesConn):
+def test_should_raise_error_on_bad_steps_definition_not_model_valid(
+    k8s_client: KubernetesConn,
+):
     bad_graph_def = {"graphname": "bad", "steps": [{"this": "bad"}]}
-    
+
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(bad_graph_def)

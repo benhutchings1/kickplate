@@ -1,0 +1,31 @@
+on:
+  workflow_call:
+    inputs:
+      pipenv-cache-key:
+        type: string
+        description: "Key to pipenv cache"
+        required: true
+        
+      python-project-path:
+        type: string
+        description: "Path to python project files"
+
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+      
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: "Restore pipenv cache"
+      uses: actions/cache@v3
+      with:
+        key: ${{ inputs.pipenv-cache-key }}
+        path: |
+          ~/.local/share/virtualenvs
+          ~/.cache/pip
+
+    - name: "Testing"
+      working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+      run: |
+        pipenv run tests

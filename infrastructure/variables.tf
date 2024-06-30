@@ -18,12 +18,13 @@ variable "env" {
     }
 }
 
-variable "resource_prefix" {
-    type = string
-    description = "Prefix to add to all resource names"
-}
-
 variable "location" {
     type = string
     description = "Deployment location of resources"
+}
+
+variable "control_node_pool_size" {
+  type = number
+  description = "Number of nodes in control node pool"
+
 }

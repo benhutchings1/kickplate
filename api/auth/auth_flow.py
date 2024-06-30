@@ -1,9 +1,11 @@
-from typing import Coroutine, Any, List
-from fastapi.security import OAuth2AuthorizationCodeBearer
-from auth.validator import TokenValidator
+from typing import Any, Coroutine
+
 from fastapi import Request
+from fastapi.security import OAuth2AuthorizationCodeBearer
+
+from auth.validator import TokenValidator
 from com_utils.error_handling import CustomError, HttpCodes
-from com_utils.logger import LoggingLevel, Loggers
+from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
 
 

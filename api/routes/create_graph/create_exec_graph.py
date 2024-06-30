@@ -1,34 +1,48 @@
 import json
 import re
-from pydantic import BaseModel
+from typing import Union
+
 from kubernetes.client.exceptions import ApiException
-from routes.create_graph.exec_graph_model import ExecGraph, ExecGraphStep
-from com_utils.logger import LoggingLevel, Loggers
+from pydantic import BaseModel, ValidationError
+
 from com_utils.error_handling import CustomError
 from com_utils.http import HttpCodes
-from external.kubenetes import KubernetesConn
+from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
+from external.kubenetes import KubernetesConn
+from routes.create_graph.exec_graph_model import ExecGraph, ExecGraphStep
+
+GRAPH_TYPING = dict[str, Union[str, dict[str, Union[str, dict]]]]
 
 
 class CreateExecGraph:
-    def __init__(self, json_def: dict) -> None:
-        exec_graph = self.load_into_model(json_def=json_def)
+    def __init__(self, k8s_client: KubernetesConn) -> None:
+        self.__k8s_client = k8s_client
 
-        return self.submit_execgraph(
-            exec_graph=self.format_request(graph_model=exec_graph)
+    def submit_graph(self, json_def: GRAPH_TYPING) -> str:
+        exec_graph = self.__load_into_model(json_def=json_def)
+        return self.__submit_execgraph(
+            exec_graph=self.__format_request(graph_model=exec_graph)
         )
 
-    def load_into_model(self, json_def: dict) -> ExecGraph:
+    def __load_into_model(self, json_def: GRAPH_TYPING) -> ExecGraph:
         """Load json definition of graph into Pydantic model"""
-        self.validate_name(json_def["graphname"])
-
         try:
+            self.__validate_name(json_def["graphname"])
+
             # load steps
             steps = []
             for step in json_def["steps"]:
                 steps.append(ExecGraphStep(**step))
 
             return ExecGraph(graphname=json_def["graphname"], steps=steps)
+        except (ValidationError, TypeError):
+            raise CustomError(
+                message="Invalid graph definition",
+                error_code=HttpCodes.USER_ERROR,
+                logging_level=LoggingLevel.INFO,
+                logging_message=Loggers.USER_ERROR,
+            )
         except KeyError as e:
             raise CustomError(
                 message=f"Data {e} missing from graph definition",
@@ -37,7 +51,7 @@ class CreateExecGraph:
                 logger=Loggers.USER_ERROR,
             )
 
-    def format_request(self, graph_model: ExecGraph) -> dict:
+    def __format_request(self, graph_model: ExecGraph) -> dict:
         """Add metadata to make valid resource request"""
         return {
             "apiVersion": ApiSettings.kube_graph_api_version,
@@ -46,7 +60,7 @@ class CreateExecGraph:
             "spec": {"steps": [step.model_dump_json() for step in graph_model.steps]},
         }
 
-    def validate_name(self, execgraph_name: str) -> None:
+    def __validate_name(self, execgraph_name: str) -> None:
         # Check graph name against regex
         regex_engine = re.compile(
             "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
@@ -61,11 +75,11 @@ class CreateExecGraph:
                 logger=Loggers.USER_ERROR,
             )
 
-    def submit_execgraph(self, exec_graph: dict) -> str:
+    def __submit_execgraph(self, exec_graph: GRAPH_TYPING) -> str:
         """Submit graph as custom resource"""
         try:
             # Attempt to create graph resource
-            KubernetesConn().create_resource(
+            self.__k8s_client.create_resource(
                 group=ApiSettings.kube_graph_group,
                 version=ApiSettings.kube_graph_api_version,
                 plural=ApiSettings.kube_graph_plural,

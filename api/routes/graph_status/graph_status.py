@@ -1,14 +1,19 @@
-from com_utils.http import HttpCodes
+from typing import Union
+
 from kubernetes.client.exceptions import ApiException
-from external.kubenetes import KubernetesConn
+import json
+
 from com_utils.error_handling import CustomError
-from com_utils.logger import LoggingLevel, Loggers
-from .graph_status_model import GraphStatusModel, StepStatus
+from com_utils.http import HttpCodes
+from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
+from external.kubenetes import KubernetesConn
+
+from .graph_status_model import GraphStatusModel, StepStatus
 
 
 class GraphStatus:
-    def __init__(self, execution_id: str):
+    def __init__(self, k8s_client: KubernetesConn):
         """
         Top level API function for getting status of an execution graph\n
         Inputs\n
@@ -17,29 +22,36 @@ class GraphStatus:
         Output\n
             - execution_description (json): description of execution\n
         """
-        return self.extract_information(
-            self.get_execution_description(execution_id=execution_id)
-        ).model_dump_json()
+        self.k8s_client = k8s_client
 
-    def get_execution_description(self, execution_id: str) -> dict:
+    def get_graph_status(self, execution_id: str) -> dict:
+        return self.__extract_information(
+            self.__get_execution_description(execution_id=execution_id)
+        ).model_dump()
+
+    def __get_execution_description(self, execution_id: str) -> dict:
         try:
-            return KubernetesConn().get_resource(
+            return self.k8s_client.get_resource(
                 name=execution_id,
                 group=ApiSettings.kube_workflow_group,
                 version=ApiSettings.kube_workflow_api_version,
                 plural=ApiSettings.kube_workflow_plural,
                 namespace=ApiSettings.kube_namespace,
             )
-        except ApiException:
-            # Get 404 raised error
-            raise CustomError(
-                message=f"Graph: {execution_id} not found",
-                error_code=HttpCodes.NOT_FOUND,
-                logger=Loggers.USER_ERROR,
-                logging_level=LoggingLevel.INFO,
-            )
+        except ApiException as e:
+            if json.loads(e.body)["code"] == "404":
+                raise CustomError(
+                    message=f"Graph: {execution_id} not found",
+                    error_code=HttpCodes.NOT_FOUND,
+                    logger=Loggers.USER_ERROR,
+                    logging_level=LoggingLevel.INFO,
+                )
+            else:
+                raise e
 
-    def extract_information(self, exec_desc: dict[str, str]) -> GraphStatusModel:
+    def __extract_information(
+        self, exec_desc: dict[str, Union[str, dict]]
+    ) -> GraphStatusModel:
         overall_labels = exec_desc["metadata"]["labels"]
         steps_desc = exec_desc["status"]["nodes"]
 
@@ -58,8 +70,8 @@ class GraphStatus:
                     name=step["displayName"],
                     state=step["phase"],
                     start_time=step["startedAt"],
-                    finish_time=step["finishedAt"],
-                    error_message=step["message"],
+                    finish_time=step.get("finishedAt", None),
+                    error_message=step.get("message", None),
                 )
                 for step in steps_desc.values()
             ],

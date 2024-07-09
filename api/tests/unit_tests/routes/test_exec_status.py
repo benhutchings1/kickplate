@@ -8,7 +8,7 @@ from kubernetes.client.exceptions import ApiException
 
 from app import app
 from com_utils.error_handling import CustomError
-from external.kubenetes import KubernetesConn
+from external.kubenetes import K8_Client
 from routes.graph_status.graph_status import GraphStatus
 from tests.unit_tests.conftest import MockHTTPResponse, mock_k8s_factory
 from com_utils.http import HttpCodes
@@ -94,13 +94,13 @@ def test_route_should_return_id_of_execution(
     sample_execution_info: GRAPH_TYPING,
     sample_formatted_status: GRAPH_TYPING,
 ):
-    app.dependency_overrides[KubernetesConn] = mock_k8s_factory(sample_execution_info)
+    app.dependency_overrides[K8_Client] = mock_k8s_factory(sample_execution_info)
     resp = test_client.get(f"/graph/{execution_id}")
     assert json.loads(resp.content) == sample_formatted_status
 
 
 def test_should_return_execution_info(
-    k8s_client: KubernetesConn,
+    k8s_client: K8_Client,
     execution_id: str,
     sample_formatted_status: GRAPH_TYPING,
     sample_execution_info: GRAPH_TYPING,
@@ -114,7 +114,7 @@ def test_should_return_execution_info(
 
 
 def test_should_raise_error_on_missing_graph(
-    k8s_client: KubernetesConn,
+    k8s_client: K8_Client,
     execution_id: str,
 ):
     k8s_client.get_resource = cast(MagicMock, k8s_client.get_resource)

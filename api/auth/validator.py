@@ -9,34 +9,33 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 
 from com_utils.error_handling import CustomError, HttpCodes
 from com_utils.logger import Loggers, LoggingLevel
-from config import ApiSettings
+import binascii
 
 
 class TokenValidator:
-    def verify_token(self, token: str) -> dict[str, str]:
+    def verify_token(
+        self,
+        token: str,
+        jwks_url: str,
+        audience: str,
+        issuer: str,
+        *,
+        verify_expiry=True,
+    ) -> dict[str, str]:
         try:
             # Get public key
-            pub_key = self.__get_rsa_key(token, ApiSettings.auth_open_id_config)
+            __pub_key = self.__get_rsa_key(token, jwks_url)
             # Verify JWT token using public key
             return jwt.decode(
                 token,
-                pub_key,
+                __pub_key,
                 verify=True,
                 algorithms=["RS256"],
-                audience=ApiSettings.auth_audience,
-                issuer=ApiSettings.auth_issuer,
-            )
-        except jwt.exceptions.InvalidTokenError as ite:
-            # Handle invalid token
-            raise CustomError(
-                error_code=HttpCodes.USER_UNAUTHORISED,
-                logging_message=f"Error decoding key, message: {repr(ite)}",
-                message="Invalid token",
-                logging_level=LoggingLevel.INFO,
-                logger=Loggers.SECURITY,
+                audience=audience,
+                issuer=issuer,
+                options={"verify_exp": verify_expiry},
             )
         except jwt.exceptions.ExpiredSignatureError as ese:
-            # Handle out of date token
             raise CustomError(
                 error_code=HttpCodes.USER_UNAUTHORISED,
                 logging_message=f"Token out of date, message: {repr(ese)}",
@@ -44,8 +43,23 @@ class TokenValidator:
                 logging_level=LoggingLevel.INFO,
                 logger=Loggers.SECURITY,
             )
+        except (jwt.exceptions.InvalidTokenError, binascii.Error) as ite:
+            raise CustomError(
+                error_code=HttpCodes.USER_UNAUTHORISED,
+                logging_message=f"Error decoding key, message: {repr(ite)}",
+                message="Invalid token",
+                logging_level=LoggingLevel.INFO,
+                logger=Loggers.SECURITY,
+            )
+        except KeyError:
+            raise CustomError(
+                error_code=HttpCodes.USER_UNAUTHORISED,
+                message="Invalid bearer token",
+                logging_message="kid not found in keyset",
+                logging_level=LoggingLevel.INFO,
+                logger=Loggers.SECURITY,
+            )
         except Exception as ge:
-            # General error handler
             raise CustomError(
                 error_code=HttpCodes.USER_UNAUTHORISED,
                 logging_message=f"General token invalid error; type: {type(ge)}; message: {repr(ge)}",
@@ -54,14 +68,14 @@ class TokenValidator:
                 logger=Loggers.SECURITY,
             )
 
-    def __get_rsa_key(self, token: str, open_id_config_url: str) -> RSAPublicNumbers:
+    def __get_rsa_key(self, token: str, jwks_url: str) -> RSAPublicNumbers:
         """Converts public key from token header into RSA key"""
         # Get headers of JWT token
         unverified_headers = self.__get_jwt_headers(token)
         # Get key ID from headers
         kid = unverified_headers["kid"]
-        # Get Entra ID OpenID public config
-        pub_config = self.__request_url_contents(open_id_config_url)
+        # Get JWKS
+        pub_config = self.__request_url_contents(jwks_url)
         # Get JWKS
         jwks_uri = pub_config["jwks_uri"]
         jwks = self.__request_url_contents(jwks_uri)
@@ -74,13 +88,7 @@ class TokenValidator:
 
         # No matching KID found, return invalid key
         if jwk_key is None:
-            raise CustomError(
-                error_code=HttpCodes.USER_UNAUTHORISED,
-                message="Invalid bearer token",
-                logging_message=f"{kid} not found in keyset",
-                logging_level=LoggingLevel.INFO,
-                logger=Loggers.SECURITY,
-            )
+            raise KeyError()
 
         # Format public JWK as RSA PEM
         return self.__rsa_pem_from_jwk(

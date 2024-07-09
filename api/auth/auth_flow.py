@@ -52,8 +52,21 @@ class OAuthCodeFlow(OAuth2AuthorizationCodeBearer):
                 logging_level=LoggingLevel.INFO,
                 logger=Loggers.SECURITY,
             )
-        token = str(request.headers["authorization"]).split(" ")[1]
-        token_contents = self.token_validator.verify_token(token=token)
+        try:
+            token = str(request.headers["authorization"]).split(" ")[1]
+        except IndexError:
+            raise CustomError(
+                error_code=HttpCodes.USER_UNAUTHORISED,
+                logging_level=LoggingLevel.INFO,
+                logger=Loggers.SECURITY,
+                message="Authorization header badly formatted. Should be 'authorization [bearer token]'}",
+            )
+        token_contents = self.token_validator.verify_token(
+            token=token,
+            jwks_url=ApiSettings.auth_open_id_config,
+            audience=ApiSettings.auth_audience,
+            issuer=ApiSettings.auth_issuer,
+        )
 
         # Check group membership
         if ApiSettings.auth_group_id not in token_contents["groups"]:

@@ -1,10 +1,11 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 
 class _ApiSettings(BaseSettings):
     # OAuth Config
-    auth_enable: bool = False
-    auth_scope: str = "api://{{clientID}}/groups"
+    auth_enable: bool = True
+    auth_scope: str = "api://268da6d1-91b3-4cf6-88a8-90837d84d94d/groups"
     auth_audience: str = "api://268da6d1-91b3-4cf6-88a8-90837d84d94d"
     auth_issuer: str = "https://sts.windows.net/301dacd7-60f1-42bf-84ce-a38206717103/"
     authorize_endpoint: str = (
@@ -17,9 +18,10 @@ class _ApiSettings(BaseSettings):
         "https://login.microsoftonline.com/301dacd7-60f1-42bf-84ce-a38206717103/v2.0/.well-known/openid-configuration"
     )
     auth_tenant_id: str = "301dacd7-60f1-42bf-84ce-a38206717103"
-    auth_group_id: str = "016c59fc-5ca7-4263-9704-a553f792c78b"
+    auth_group_id: str = "7cf78882-1f33-44b9-9c41-13fc239b64c8"
     auth_client_id: str = "268da6d1-91b3-4cf6-88a8-90837d84d94d"
     auth_redirect_url: str = "https://localhost"
+    auth_user_groups: List[str] = [""]
 
     # Kubernetes Config
     kube_host: str = "https://127.0.0.1:32769"

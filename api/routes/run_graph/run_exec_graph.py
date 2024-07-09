@@ -9,7 +9,7 @@ from com_utils.error_handling import CustomError
 from com_utils.http import HttpCodes
 from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
-from external.kubenetes import KubernetesConn
+from external.kubenetes import K8_Client
 
 
 class ResponseModel(BaseModel):
@@ -17,7 +17,7 @@ class ResponseModel(BaseModel):
 
 
 class RunGraph:
-    def __init__(self, k8s_client: KubernetesConn):
+    def __init__(self, k8s_client: K8_Client):
         self.k8s_client = k8s_client
 
     def run_graph(self, graph_name: str) -> ResponseModel:

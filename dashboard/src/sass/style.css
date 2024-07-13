@@ -1,4 +1,3 @@
-// https://www.joshwcomeau.com/css/custom-css-reset/
 /*
   1. Use a more-intuitive box-sizing model.
 */
@@ -7,12 +6,14 @@
 *::after {
   box-sizing: border-box;
 }
+
 /*
     2. Remove default margin
   */
 * {
   margin: 0;
 }
+
 /*
     Typographic tweaks!
     3. Add accessible line-height
@@ -22,6 +23,7 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+
 /*
     5. Improve media defaults
   */
@@ -33,6 +35,7 @@ svg {
   display: block;
   max-width: 100%;
 }
+
 /*
     6. Remove built-in form typography styles
   */
@@ -42,6 +45,7 @@ textarea,
 select {
   font: inherit;
 }
+
 /*
     7. Avoid text overflows
   */
@@ -54,6 +58,7 @@ h5,
 h6 {
   overflow-wrap: break-word;
 }
+
 /*
     8. Create a root stacking context
   */
@@ -61,3 +66,32 @@ h6 {
 #__next {
   isolation: isolate;
 }
+
+html,
+body,
+form {
+  margin: 0;
+  padding: 0;
+}
+
+input[type=text] {
+  border: 1px solid #999;
+}
+
+a {
+  color: #039;
+}
+
+a:hover {
+  color: #03c;
+}
+
+.dark {
+  background-color: #1c1c1c;
+}
+
+.light {
+  background-color: #e4e5f1;
+}
+
+/*# sourceMappingURL=style.css.map */

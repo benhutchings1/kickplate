@@ -1,0 +1,5 @@
+@use "../abstracts/variables";
+
+.dark {
+  background-color: variables.$darkPrimaryColor;
+}

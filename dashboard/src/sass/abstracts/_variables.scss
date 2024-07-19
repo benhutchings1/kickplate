@@ -1,11 +1,17 @@
-$darkPrimaryColor: #1c1c1c;
-$darkSecondaryColor: #161616;
-$darkHoverColor: #2c2c2c;
-$darkPrimaryTextColor: #757575;
-$darkTextHoverColor: #f2f2f2;
+$darkPrimaryColor: rgb(31, 31, 43);
+$lightPrimaryColor: rgb(118, 125, 206);
 
-$lightPrimaryColor: #e4e5f1;
-$lightSecondaryColor: #cfcecc;
-$lightHoverColor: #1466f2;
-$lightPrimaryTextColor: #7f7f7f;
-$lightTextHoverColor: #cbf0ff;
+$darkSecondaryColor: rgb(24, 24, 33);
+$lightSecondaryColor: rgb(238, 238, 238);
+
+$darkHoverColor: rgb(44, 44, 44);
+$lightHoverColor: rgb(20, 102, 242);
+
+$darkPrimaryTextColor: rgb(196, 196, 196);  
+$lightPrimaryTextColor: rgb(225, 235, 255);
+
+$darkSecondaryTextColor: rgb(163, 163, 163);
+$lightSecondaryTextColor: rgb(217, 223, 227);
+
+$darkTextHoverColor: rgb(255, 255, 255);
+$lightTextHoverColor: rgb(203, 240, 255);

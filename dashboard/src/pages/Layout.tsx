@@ -1,30 +1,30 @@
-import { useContext } from "react";
-import { Sidebar, pageMap } from "../components/Sidebar";
-import { faCog, faGaugeSimpleHigh } from "@fortawesome/free-solid-svg-icons";
+import React, { useContext } from "react";
+import { Sidebar } from "../components/Sidebar";
 import ThemeContext from "../contexts/theme/ThemeContext";
+import { sidebarPageDirectory } from "./pageDirectory";
 
-const sidebarPageDirectory: Array<pageMap> = [
-  {
-    name: "Dashboard",
-    link: "/",
-    icon: faGaugeSimpleHigh,
-  },
-  {
-    name: "Settings",
-    link: "/",
-    icon: faCog,
-  },
-];
+interface Props {
+  children?;
+}
 
-export const Layout = () => {
+export const BaseLayout = (props: Props) => {
   const { theme } = useContext(ThemeContext);
-  return (
-    <div className={theme} style={{ display: "flex  " }}>
-      <Sidebar pageDir={sidebarPageDirectory} />
-      <div style={{ marginLeft: "250px", padding: "20px", width: "100%" }}>
 
+  return (
+    <div className={ theme }>
+    <div className="container-fluid">
+      <div className="row flex-nowrap">
+        <div className="canvas-sidebar col-2 text-center">
+          <Sidebar pageDir={sidebarPageDirectory} />
+        </div>
+        <div className="canvas-main col-10">
+          <div style={{padding: 20}}>
+            {props.children}
+          </div>
+        </div>
       </div>
+    </div>
     </div>
   );
 };
-export default Layout;
+export default BaseLayout;

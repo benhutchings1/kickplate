@@ -86,12 +86,66 @@ a:hover {
   color: #03c;
 }
 
-.dark {
-  background-color: #1c1c1c;
+.canvas-sidebar {
+  height: 100vh;
+}
+.canvas-sidebar .icon {
+  padding-right: 10px;
 }
 
-.light {
-  background-color: #e4e5f1;
+.dark .canvas-sidebar {
+  background-color: rgb(31, 31, 43);
+  color: rgb(196, 196, 196);
+}
+.dark .canvas-sidebar .icon {
+  padding-right: 10px;
+  color: rgb(163, 163, 163);
+}
+.dark .canvas-sidebar .icon:hover {
+  color: rgb(255, 255, 255);
+}
+.dark .canvas-sidebar .item-text:hover {
+  color: rgb(255, 255, 255);
+}
+.dark .canvas-sidebar .item-text {
+  color: rgb(196, 196, 196);
+}
+.dark .canvas-sidebar .navbrand {
+  color: rgb(196, 196, 196);
+}
+.dark .canvas-sidebar .theme_text {
+  margin-bottom: 5px;
+}
+.dark .canvas-main {
+  background-color: rgb(24, 24, 33);
+  color: rgb(196, 196, 196);
+}
+
+.light .canvas-sidebar {
+  background-color: rgb(118, 125, 206);
+  color: rgb(225, 235, 255);
+}
+.light .canvas-sidebar .icon {
+  padding-right: 10px;
+  color: rgb(217, 223, 227);
+}
+.light .canvas-sidebar .icon:hover {
+  color: rgb(203, 240, 255);
+}
+.light .canvas-sidebar .item-text:hover {
+  color: rgb(203, 240, 255);
+}
+.light .canvas-sidebar .item-text {
+  color: rgb(225, 235, 255);
+}
+.light .canvas-sidebar .navbrand {
+  color: rgb(225, 235, 255);
+}
+.light .canvas-sidebar .theme_text {
+  margin-bottom: 5px;
+}
+.light .canvas-main {
+  background-color: rgb(238, 238, 238);
 }
 
 /*# sourceMappingURL=style.css.map */

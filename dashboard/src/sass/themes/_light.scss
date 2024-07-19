@@ -1,5 +1,37 @@
-@use "../abstracts/variables";
+@use "../abstracts/variables" as vars;
 
 .light {
-  background-color: variables.$lightPrimaryColor;
+  // Sidebar
+  .canvas-sidebar {
+    background-color: vars.$lightPrimaryColor;
+    color: vars.$lightPrimaryTextColor;
+  
+    .icon {
+      padding-right: 10px;
+      color: vars.$lightSecondaryTextColor;
+    }
+    .icon:hover {
+      color: vars.$lightTextHoverColor;
+    }
+    .item-text:hover {
+      color: vars.$lightTextHoverColor
+    }
+
+    .item-text {
+      color: vars.$lightPrimaryTextColor;
+    }
+
+    .navbrand {
+      color: vars.$lightPrimaryTextColor;
+    }
+  
+    .theme_text {
+      margin-bottom: 5px;
+    }
+  }
+
+  // Main canvas
+  .canvas-main {
+    background-color: vars.$lightSecondaryColor;
+  }
 }

@@ -1,6 +1,7 @@
-import { Component } from "react";
+import React, { Component } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Layout from "./pages/Layout";
+import BaseLayout from "./pages/Layout";
+import { sidebarPageDirectory as pageDir } from "./pages/pageDirectory";
 import ThemeContextProvider from "./contexts/theme/ThemeContextProvider";
 // Bootstrap Bundles
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -12,7 +13,10 @@ class App extends Component {
       <ThemeContextProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Layout />}></Route>
+            {pageDir.map((page) => (
+              <Route path={page.link} element={React.createElement(page.element)}>
+              </Route>
+            ))}
           </Routes>
         </BrowserRouter>
       </ThemeContextProvider>

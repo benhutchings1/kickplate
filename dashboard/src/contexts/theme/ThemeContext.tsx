@@ -1,6 +1,8 @@
 import React from "react";
 
 export default React.createContext({
-    theme: "light",
-    setTheme: (theme: string) => {theme}
+  theme: "dark",
+  setTheme: (theme: string) => {
+    theme;
+  },
 });

@@ -6,7 +6,6 @@ import {
   faPlayCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { IconDefinition } from "@fortawesome/free-solid-svg-icons";
-import CreateGraph from "./createGraph";
 import BaseLayout from "./Layout";
 
 export type pageMap = {
@@ -33,7 +32,7 @@ export const sidebarPageDirectory: Array<pageMap> = [
     name: "Create Graph",
     link: "/graph/create",
     icon: faPencilRuler,
-    element: CreateGraph
+    element: BaseLayout
   },
   {
     name: "Run Graph",

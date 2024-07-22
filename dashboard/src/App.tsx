@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import BaseLayout from "./pages/Layout";
-import { sidebarPageDirectory as pageDir } from "./pages/pageDirectory";
+import { sidebarPageDirectory as pageDir } from "./pages/PageDirectory";
 import ThemeContextProvider from "./contexts/theme/ThemeContextProvider";
 // Bootstrap Bundles
 import "bootstrap/dist/css/bootstrap.min.css";

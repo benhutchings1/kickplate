@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { Sidebar } from "../components/Sidebar";
 import ThemeContext from "../contexts/theme/ThemeContext";
-import { sidebarPageDirectory } from "./pageDirectory";
+import { sidebarPageDirectory } from "./PageDirectory";
 
 interface Props {
   children?;

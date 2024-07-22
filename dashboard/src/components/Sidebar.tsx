@@ -4,7 +4,7 @@ import { faRocket, faSun } from "@fortawesome/free-solid-svg-icons";
 import { useContext } from "react";
 import ThemeContext from "../contexts/theme/ThemeContext";
 import ThemeToggleSwitch from "./ThemeToggler";
-import { pageMap } from "../pages/pageDirectory";
+import { pageMap } from "../pages/PageDirectory";
 
 interface Props {
   pageDir: Array<pageMap>;

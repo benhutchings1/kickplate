@@ -1,0 +1,52 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: execgraphs.{{ .Values.global.domainName }}
+spec:
+  group: {{ .Values.global.domainName }}
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              steps:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+                  properties:
+                    stepname:
+                      type: string
+                    image:
+                      type: string
+                    replicas:
+                      type: integer
+                    dependencies:
+                      type: array
+                      items:
+                        type: string
+                    env:
+                      type: object
+                      additionalProperties: true
+                    args:
+                      type: array
+                      items:
+                        type: string
+                    command:
+                      type: array
+                      items:
+                        type: string
+
+  scope: Namespaced
+  names:
+    plural: execgraphs
+    singular: execgraph
+    kind: ExecutionGraph
+    shortNames:
+    - eg

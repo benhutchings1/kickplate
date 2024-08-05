@@ -1,0 +1,14 @@
+serviceAccountName: null
+createServiceAccount: false
+
+namespaced: false
+namespace: null
+
+giveRole: false
+role:
+  - verbs: []
+    resources: []
+    role-name: string
+    apiGroups: ["*"]
+
+createSecret: false

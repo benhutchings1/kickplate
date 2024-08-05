@@ -1,15 +1,14 @@
 html,
 body,
-form {
+form,
+#root,
+.light,
+.dark {
   margin: 0;
   padding: 0;
+  height: 100%;
+  width: 100%;
 }
 input[type="text"] {
   border: 1px solid #999;
-}
-a {
-  color: #039;
-}
-a:hover {
-  color: #03c;
 }

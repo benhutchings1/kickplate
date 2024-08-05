@@ -1,17 +1,22 @@
-$darkPrimaryColor: rgb(31, 31, 43);
-$lightPrimaryColor: rgb(118, 125, 206);
+@use "sass:map";
 
-$darkSecondaryColor: rgb(24, 24, 33);
-$lightSecondaryColor: rgb(238, 238, 238);
 
-$darkHoverColor: rgb(44, 44, 44);
-$lightHoverColor: rgb(20, 102, 242);
+$dark: (
+    "primary": rgb(31, 31, 43),
+    "secondary": rgb(24, 24, 33),
+    "tertiary": rgb(16, 16, 19),
+    "hover": rgb(44, 44, 44),
+    "text-primary": rgb(196, 196, 196),
+    "text-secondary": rgb(163, 163, 163),
+    "text-hover": rgb(255, 255, 255),
+);
 
-$darkPrimaryTextColor: rgb(196, 196, 196);  
-$lightPrimaryTextColor: rgb(225, 235, 255);
-
-$darkSecondaryTextColor: rgb(163, 163, 163);
-$lightSecondaryTextColor: rgb(217, 223, 227);
-
-$darkTextHoverColor: rgb(255, 255, 255);
-$lightTextHoverColor: rgb(203, 240, 255);
+$light: (
+    "primary": rgb(238, 238, 238),
+    "secondary": rgb(118, 125, 206),
+    "tertiary": rgb(61, 17, 236),
+    "hover": rgb(20, 102, 242),
+    "text-primary": rgb(225, 235, 255),
+    "text-secondary": rgb(217, 223, 227),
+    "text-hover": rgb(203, 240, 255)
+);

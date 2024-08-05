@@ -1,6 +1,10 @@
 {
     "yaml.schemas": {
-        "https://json.schemastore.org/kustomization.json": "file:///home/benhutch/deployment-engine-real/deployment-engine/api/deployment/api_deployment.yaml"
+        "https://json.schemastore.org/kustomization.json": "file:///home/benhutch/deployment-engine-real/deployment-engine/api/deployment/api_deployment.yaml",
+        "https://json.schemastore.org/helmfile.json": [
+            "file:///home/benhutch/deployment-project/kubernetes/deployment-engine/infrastructure/helm/bases/values.yaml",
+            "file:///home/benhutch/deployment-project/kubernetes/deployment-engine/infrastructure/helm/bases/crds/ExecutionGraph.yaml"
+        ]
     },
     "python.testing.pytestArgs": [
         "api"

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { Sidebar } from "../components/Sidebar";
 import ThemeContext from "../contexts/theme/ThemeContext";
 import { sidebarPageDirectory } from "./PageDirectory";
@@ -12,18 +12,12 @@ export const BaseLayout = (props: Props) => {
 
   return (
     <div className={ theme }>
-    <div className="container-fluid">
-      <div className="row flex-nowrap">
-        <div className="canvas-sidebar col-2 text-center">
-          <Sidebar pageDir={sidebarPageDirectory} />
-        </div>
-        <div className="canvas-main col-10">
-          <div style={{padding: 20}}>
-            {props.children}
-          </div>
-        </div>
+      <div className="canvas-container">
+        <Sidebar pageDir={sidebarPageDirectory} >
+          this is the main page
+          {props.children}
+        </Sidebar>
       </div>
-    </div>
     </div>
   );
 };

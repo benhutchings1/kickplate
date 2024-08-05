@@ -1,45 +1,74 @@
 import { Navbar, Nav } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faRocket, faSun } from "@fortawesome/free-solid-svg-icons";
+import { faRocket, faSun, faBars } from "@fortawesome/free-solid-svg-icons";
 import { useContext } from "react";
 import ThemeContext from "../contexts/theme/ThemeContext";
 import ThemeToggleSwitch from "./ThemeToggler";
 import { pageMap } from "../pages/PageDirectory";
+import Offcanvas from 'react-bootstrap/Offcanvas';
+import { useState } from 'react';
+import Button from 'react-bootstrap/Button';
+
 
 interface Props {
   pageDir: Array<pageMap>;
+  children?;
 }
 
 export const Sidebar = (props: Props) => {
   const { pageDir } = props;
   const { theme, setTheme } = useContext(ThemeContext);
 
-  return (
-    <Navbar className="canvas-sidebar flex-column p-5">
-      <Navbar.Brand className="navbrand mb-4" href="/">
-        <FontAwesomeIcon icon={faRocket} className="icon mr-2" />
-        <span className="brand">Execution Dashboard</span>
-      </Navbar.Brand>
-      <Nav className="flex-column">
-        {pageDir.map((page) => (
-          <Nav.Link href={page.link}>
-            <FontAwesomeIcon icon={page.icon} className="icon mr-2" />
-            <span className="item-text">{page.name}</span>
-          </Nav.Link>
-        ))}
-      </Nav>
+  const [show, setShow] = useState(false);
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
 
-      <Nav variant={theme} className="mt-auto text-center">
-        <div>
-          <span className="item-text">
-            <FontAwesomeIcon icon={faSun} className="icon mr-2" />
-            Toggle Light Mode
-          </span>
-          <div className="mt-2">
-            <ThemeToggleSwitch theme={theme} setTheme={setTheme} />
-          </div>
+  return (
+    <>
+      <div className="navbar">
+        <div className="button-wrapper">
+          <Button onClick={handleShow} className="open-bar-button">
+            <FontAwesomeIcon icon={faBars} className="open-bar-icon"/>
+          </Button>
         </div>
-      </Nav>
-    </Navbar>
+      </div>
+      <div className="main-canvas">
+        <div className="p-3">
+          {props.children}
+        </div>
+      </div>
+      <Offcanvas show={show} className={ theme + " sidebar"  } onHide={handleClose}>
+          <Offcanvas.Header className="title text-centere" closeButton>
+            <Offcanvas.Title>
+              <FontAwesomeIcon icon={faRocket} className="icon mr-2" />
+              <span className="brand">Execution Dashboard</span>
+            </Offcanvas.Title>
+          </Offcanvas.Header>
+            <Offcanvas.Body>
+              <Nav className="nav-item flex-column text-center">
+                {pageDir.map((page) => (
+                  <Nav.Link href={page.link}>
+                    <FontAwesomeIcon icon={page.icon} className="icon" />
+                    <span className="item-t ext">{page.name}</span>
+                  </Nav.Link>
+                ))}
+              </Nav>
+              <div className="theme-toggle text-center">
+                  <div className="theme-toggle-text">
+                    <div>
+                      <FontAwesomeIcon icon={faSun} className="icon" />
+                    </div>
+                    <div>
+                      Toggle Light Mode
+                    </div>
+                  </div>
+                  <div className="theme-toggle-switch">
+                    <ThemeToggleSwitch theme={theme} setTheme={setTheme} />
+                  </div>
+              </div>
+            </Offcanvas.Body>
+      </Offcanvas>
+    </>
   );
 };
+

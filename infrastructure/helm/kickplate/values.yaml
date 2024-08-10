@@ -1,0 +1,10 @@
+global:
+  domainName: kickplate.com
+  appName: kickplate
+
+api:
+  subdomain: api
+  appName: api
+
+env: dev
+registry-url: localhost:5000

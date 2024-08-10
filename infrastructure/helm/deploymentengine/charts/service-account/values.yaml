@@ -1,2 +1,15 @@
-serviceAccounts: []
-roles: []
+serviceAccounts:
+  - name: null
+    giveRoles: []
+    namespace: null
+    createSecret: false
+    labels: null
+
+roles:
+  - roleName: null
+    verbs: []
+    resources: []
+    apiGroups: []
+    labels: null
+
+labelsCommon: null

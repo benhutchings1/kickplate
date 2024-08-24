@@ -41,6 +41,25 @@ roles:
     labels:
         role: testenv
 
+### Predefine role verbs
+There are currently 3 predefined roles which are short hand for sets of verbs
+- reader: ["get", "describe", "list", "watch"]
+- contributor: ["get", "describe", "list", "watch", "create", "patch", "update"]
+- owner: ["get", "describe", "list", "watch", "create", "patch", "update", "delete", "deleteCollection"]
+
+If a set of verbs are provided then the predefined roles are overwritten
+Useage of the predefined role are found below
+roles:
+-   roleName: readMap
+    role: "reader"
+    resources: ["ConfigMap"]
+    apiGroups: ["v1"]
+    labels:
+        role: testenv
+
+Expected outcome verbs
+["get", "describe", "list", "watch"]
+
 ## Common Labels
 labelsCommon: yaml - subtree of key:value pairings common to every generated resource
 

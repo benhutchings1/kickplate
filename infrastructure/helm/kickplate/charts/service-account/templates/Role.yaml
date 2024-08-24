@@ -15,5 +15,5 @@ metadata:
 rules:
   - resources: {{ $role.resources }}
     apiGroups: {{ $role.apiGroups }}
-    verbs: {{ $role.verbs }}
+    verbs: {{ include "role.parser" $role }}
 {{ end }}

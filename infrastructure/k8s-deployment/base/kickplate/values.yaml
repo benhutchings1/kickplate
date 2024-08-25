@@ -1,0 +1,83 @@
+global:
+  domainName: kickplate.com
+  appName: kickplate
+  env: dev
+  commonLabels:
+    app: kickplate
+
+bases:
+  should_deploy: false
+
+namespaces:
+  should_deploy: true
+  names:
+    - kickplate-api
+    - kickplate-dashboard
+    - kickplate-registry
+
+networking:
+  should_deploy: false
+
+registry:
+  should_deploy: false
+  registryUrl: https://hub.docker.com
+
+api:
+  should_deploy: true
+  subdomain: api
+  namespace: default
+  appName: api
+  replicas: 1
+  imageName: nginx
+  imageID: latest
+  port: 5000
+  serviceAccountName: sa-api
+
+dashboard:
+  should_deploy: false
+  subdomain: dashboard
+  namespace: kickplate-dashboard
+  appName: dashboard
+  replicas: 1
+  imageName: nginx
+  imageID: latest
+  port: 4000
+  serviceAccountName: sa-dashboard
+
+service-account:
+  should_deploy: true
+  serviceAccounts:
+    - name: sa-api
+      giveRoles: ["ExecutionGraphReader"]
+      namespace: kickplate-api
+      createSecret: true
+      labels:
+        service: api
+
+    - name: sa-dashboard
+      giveRoles: ["PodReader"]
+      namespace: kickplate-dashboard
+      createSecret: true
+      labels:
+        service: api
+
+  roles:
+    - roleName: ExecutionGraphReader
+      role: reader
+      resources: ["ExecutionGraph"]
+      apiGroups: ["v1"]
+
+    - roleName: ExecutionGraphContributor
+      role: contributor
+      resources: ["ExecutionGraph"]
+      apiGroups: ["v1"]
+
+    - roleName: ExecutionGraphOwner
+      role: owner
+      resources: ["ExecutionGraph"]
+      apiGroups: ["v1"]
+
+    - roleName: PodReader
+      role: reader
+      resources: ["Pods", "Jobs"]
+      apiGroups: ["v1"]

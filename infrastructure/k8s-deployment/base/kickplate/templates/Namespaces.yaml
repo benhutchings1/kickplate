@@ -1,0 +1,9 @@
+{{- if .Values.namespaces.should_deploy -}}
+{{- range $acc := .Values.namespaces.names -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $acc }}
+---
+{{ end }}
+{{- end -}}

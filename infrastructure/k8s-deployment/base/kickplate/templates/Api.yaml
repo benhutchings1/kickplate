@@ -1,0 +1,51 @@
+{{- if .Values.api.should_deploy }}
+{{- $apiFullName := printf "%s-%s" .Values.global.appName .Values.api.appName }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $apiFullName }}
+  {{- if not (eq .Values.api.namespace nil) }}
+  namespace: {{ .Values.api.namespace | quote }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $apiFullName }}
+  template:
+    metadata:
+      labels:
+        {{ include "common.labels" $ }}
+        app: {{ $apiFullName }}
+    spec:
+      containers:
+      - name: {{ $apiFullName }}
+        image: {{ .Values.api.imageName }}:{{ .Values.api.imageID | default "latest"}}
+        ports:
+          - containerPort: {{ .Values.api.port }}
+        env:
+          - name: kube_service_account_key
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.api.serviceAccountName }}
+                key: token
+
+          - name: kube_ca_crt
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.api.serviceAccountName }}
+                key: ca.crt
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $apiFullName }}
+spec:
+  selector:
+    app: {{ $apiFullName }}
+  ports:
+  - protocol: TCP
+    port: {{ .Values.api.port }}
+    targetPort: {{ .Values.api.port }}
+  type: ClusterIP
+{{- end }}

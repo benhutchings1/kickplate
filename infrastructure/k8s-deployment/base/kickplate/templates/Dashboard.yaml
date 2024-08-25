@@ -1,0 +1,42 @@
+{{- if .Values.dashboard.should_deploy -}}
+{{- $dashboardFullName := printf "%s-%s" .Values.global.appName .Values.dashboard.appName -}}
+dashboardVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $dashboardFullName | quote }}
+  {{- if not (eq .Values.dashboard.namespace nil) }}
+  namespace: {{ .Values.dashboard.namespace | quote }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.dashboard.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $dashboardFullName }}
+  template: 
+    metadata:
+      labels:
+        {{ include "common.labels" $ }}
+        app: {{ $dashboardFullName }}
+    spec:
+      containers:
+      - name: {{ $dashboardFullName }}
+        image: {{ .Values.registryUrl }}/{{ .Values.dashboard.imageName }}:{{ .Values.dashboard.imageID | default "latest"}}
+        ports:
+        - containerPort: {{ .Values.dashboard.port }}
+{{- end }}
+---
+{{- $dashboardFullName := printf "%s-%s" .Values.global.appName .Values.dashboard.appName -}}
+{{- if .Values.dashboard.should_deploy }}
+dashboardVersion: v1
+kind: Service
+metadata:
+  name: {{ $dashboardFullName }}
+spec:
+  selector:
+    app: {{ $dashboardFullName }}
+  ports:
+  - protocol: TCP
+    port: {{ .Values.dashboard.port }}
+    targetPort: {{ .Values.dashboard.port }}
+  type: ClusterIP
+{{- end }}

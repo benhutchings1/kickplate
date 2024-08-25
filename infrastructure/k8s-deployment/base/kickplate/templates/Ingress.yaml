@@ -1,0 +1,30 @@
+{{- if .Values.networking.should_deploy }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.global.appName }}-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: {{ .Values.api.subdomain }}.{{.Values.global.domainName}}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{printf "%s-%s" .Values.global.appName .Values.api.appName }}
+            port:
+              number: {{ .Values.api.port }}
+  - host: {{ .Values.dashboard.subdomain }}.{{.Values.global.domainName}}
+    http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: {{printf "%s-%s" .Values.global.appName .Values.dashboard.appName }}
+              port:
+                number: {{ .Values.dashboard.port }}
+{{- end -}}

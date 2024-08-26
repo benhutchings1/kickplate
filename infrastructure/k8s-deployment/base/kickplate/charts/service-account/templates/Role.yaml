@@ -2,9 +2,8 @@
 {{- range $role := .Values.roles }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
-labels:
 metadata:
-  {{- if not $role.namespace }}
+  {{- if not (eq $role.namespace nil) }}
   namespace: {{ $role.namespace | quote }}
   {{- end }}
   name: {{ $role.roleName }}
@@ -17,5 +16,6 @@ rules:
   - resources: {{ $role.resources }}
     apiGroups: {{ $role.apiGroups }}
     verbs: {{ include "role.parser" $role }}
+---
 {{- end -}}
 {{- end -}}

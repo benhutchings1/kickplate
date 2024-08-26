@@ -11,29 +11,29 @@ spec:
   replicas: {{ .Values.api.replicas }}
   selector:
     matchLabels:
-      app: {{ $apiFullName }}
+      service: {{ $apiFullName }}
   template:
     metadata:
       labels:
         {{ include "common.labels" $ }}
-        app: {{ $apiFullName }}
+        service: {{ $apiFullName }}
     spec:
       containers:
       - name: {{ $apiFullName }}
-        image: {{ .Values.api.imageName }}:{{ .Values.api.imageID | default "latest"}}
+        image: {{ .Values.registry.registryUrl }}/{{ .Values.api.imageName }}:{{ .Values.api.imageID | default "latest"}}
         ports:
           - containerPort: {{ .Values.api.port }}
         env:
           - name: kube_service_account_key
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.api.serviceAccountName }}
+                name: {{ .Values.api.serviceAccountName }}-secret
                 key: token
 
           - name: kube_ca_crt
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.api.serviceAccountName }}
+                name: {{ .Values.api.serviceAccountName }}-secret
                 key: ca.crt
 ---
 apiVersion: v1
@@ -42,7 +42,7 @@ metadata:
   name: {{ $apiFullName }}
 spec:
   selector:
-    app: {{ $apiFullName }}
+    service: {{ $apiFullName }}
   ports:
   - protocol: TCP
     port: {{ .Values.api.port }}

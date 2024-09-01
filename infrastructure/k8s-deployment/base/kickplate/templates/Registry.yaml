@@ -1,2 +1,39 @@
-{{- if .Values.registry.should_deploy -}}
-{{- end -}}
+{{- if .Values.registry.should_deploy }}
+{{- $registryFullName := printf "%s-%s" .Values.global.appName .Values.registry.appName }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $registryFullName }}
+  {{- if not (eq .Values.registry.namespace nil) }}
+  namespace: {{ .Values.registry.namespace | quote }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.registry.replicas }}
+  selector:
+    matchLabels:
+      service: {{ $registryFullName }}
+  template:
+    metadata:
+      labels:
+        {{ include "common.labels" $ }}
+        service: {{ $registryFullName }}
+    spec:
+      containers:
+      - name: {{ $registryFullName }}
+        image: {{ .Values.registry.imageName }}:{{ .Values.registry.imageID | default "latest"}}
+        ports:
+          - containerPort: {{ .Values.registry.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $registryFullName }}
+spec:
+  selector:
+    service: {{ $registryFullName }}
+  ports:
+  - protocol: TCP
+    port: {{ .Values.registry.port }}
+    targetPort: {{ .Values.registry.port }}
+  type: ClusterIP
+{{- end }}

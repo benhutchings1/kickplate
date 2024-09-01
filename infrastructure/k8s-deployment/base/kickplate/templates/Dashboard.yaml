@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: {{ $dashboardFullName }}
-        image: {{ .Values.registryUrl }}/{{ .Values.dashboard.imageName }}:{{ .Values.dashboard.imageID | default "latest"}}
+        image: {{ .Values.dashboard.imageName }}:{{ .Values.dashboard.imageID | default "latest"}}
         ports:
         - containerPort: {{ .Values.dashboard.port }}
 {{- end }}

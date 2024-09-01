@@ -16,16 +16,22 @@ namespaces:
     - kickplate-registry
 
 networking:
-  should_deploy: false
+  should_deploy: true
 
 registry:
   should_deploy: false
-  registryUrl: https://hub.docker.com
+  subdomain: registry
+  namespace: kickplate-registry
+  appName: registry
+  replicas: 1
+  imageName: registry
+  imageID: 2
+  port: 5000
 
 api:
   should_deploy: true
   subdomain: api
-  namespace: default
+  namespace: kickplate-api
   appName: api
   replicas: 1
   imageName: nginx

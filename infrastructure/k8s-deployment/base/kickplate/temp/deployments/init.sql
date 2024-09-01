@@ -1,0 +1,3 @@
+CREATE USER kc;
+CREATE DATABASE keycloak_data;
+GRANT ALL PRIVILEGES ON DATABASE keycloak_data TO kc;

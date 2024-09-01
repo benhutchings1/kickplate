@@ -1,0 +1,89 @@
+on:
+  workflow_call:
+    inputs:
+      pipenv_cache_key:
+        type: string
+        description: "Key to pipenv cache"
+        required: true
+
+      working_directory:
+        type: string
+        description: "Path to python project files"
+
+      python_version:
+        type: string
+        description: "Python version to use"
+        default: "3.10"
+
+jobs:
+  linting:
+    name: "API Linting"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Restore pipenv cache"
+        uses: actions/cache@v3
+        with:
+          key: ${{ inputs.pipenv_cache_key }}
+          path: |
+            ${{ github.workspace }}/${{ inputs.working_directory }}/.venv
+
+      - name: "Set up python-${{ inputs.python_version }}"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install Pipenv
+        run: |
+          python -m pip install --upgrade pip
+          PIPENV_VENV_IN_PROJECT=1 python -m pip install pipenv --dev
+
+      - name: "Black"
+        working-directory: ${{ github.workspace }}/${{ inputs.working_directory }}
+        run: |
+          pipenv run black
+
+      - name: "Isort"
+        working-directory: ${{ github.workspace }}/${{ inputs.working_directory }}
+        run: |
+          pipenv run isort
+
+      - name: "Flake8"
+        working-directory: ${{ github.workspace }}/${{ inputs.working_directory }}
+        run: |
+          pipenv run linting
+
+  testing:
+    name: "API Testing"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: "Restore pipenv cache"
+        uses: actions/cache@v3
+        with:
+          key: ${{ inputs.pipenv_cache_key }}
+          path: |
+            ${{ github.workspace }}/${{ inputs.working_directory }}/.venv
+
+      - name: "Set up python-${{ inputs.python_version }}"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install Pipenv
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
+
+      - name: Load Pipenv
+        run: |
+          PIPENV_VENV_IN_PROJECT=1 python -m pipenv install --dev
+
+      - name: "Testing"
+        working-directory: ${{ github.workspace }}/${{ inputs.working_directory }}
+        run: |
+          pipenv run tests

@@ -1,12 +1,15 @@
-from python:3.10.14-alpine3.20
+ARG python_version='3.10'
+FROM python:${python_version}-alpine3.20
+
 WORKDIR /api
 
-run pip install pipenv
-env PIPENV_VENV_IN_PROJECT=1
-copy ./Pipfile .
-copy ./Pipfile.lock .
-run pipenv install
+ENV PIPENV_VENV_IN_PROJECT=1
 
-copy . .
+RUN pip install pipenv
+COPY ./Pipfile .
+COPY ./Pipfile.lock .
+RUN pipenv install --system
+
+COPY . .
 
 CMD ["pipenv", "run", "python", "app.py"]

@@ -27,7 +27,7 @@ class _ApiSettings(BaseSettings):
     kube_host: str = "https://127.0.0.1:32769"
     kube_service_account_key: str
     kube_client_cert_path: str = "cert/"
-    kube_namespace: str = "argo"
+    kube_namespace: str = "default"
 
     # Graph definitions
     kube_graph_api_version: str = "v1"

@@ -37,7 +37,7 @@ runs:
       working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
       run: |
         cd /home/runner/work/kickplate/kickplate/api
-       echo "${{ github.workspace }}/${{ inputs.python-project-path }}"
+        echo "${{ github.workspace }}/${{ inputs.python-project-path }}"
         ls 
         cat Pipfile.lock
 

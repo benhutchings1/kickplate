@@ -30,7 +30,7 @@ runs:
       shell: bash
       id: cache_key
       working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
-      run: cache_key=${{ runner.os }}-pipenv-${{ hashFiles('Pipfile.lock') }} >> $GITHUB_OUTPUT
+      run: echo "cache_key=${{ runner.os }}-pipenv-${{ hashFiles('Pipfile.lock') }}" >> $GITHUB_OUTPUT
 
     - name: test steps
       shell: bash

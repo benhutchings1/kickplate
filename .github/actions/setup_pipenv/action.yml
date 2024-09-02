@@ -28,6 +28,7 @@ runs:
     - name: Generate Cache Key
       shell: bash
       id: cache_key
+      working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
       run: cache_key=${{ runner.os }}-pipenv-${{ hashFiles('Pipfile.lock') }} >> $GITHUB_OUTPUT
 
     - name: "Cache Pipenv Virtual Environment"

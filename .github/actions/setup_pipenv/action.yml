@@ -29,15 +29,14 @@ runs:
     - name: Generate Cache Key
       shell: bash
       id: cache_key
-      working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+      working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
       run: cache_key=${{ runner.os }}-pipenv-${{ hashFiles('Pipfile.lock') }} >> $GITHUB_OUTPUT
 
     - name: temp
       shell: bash
-      working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+      working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
       run: |
-        cd /home/runner/work/kickplate/kickplate/api
-        echo "${{ github.workspace }}/${{ inputs.python-project-path }}"
+        echo "${{ github.workspace }}/${{ inputs.working-directory }}"
         ls 
         cat Pipfile.lock
 
@@ -51,7 +50,7 @@ runs:
     
     - name: "Install Dependencies"
       shell: bash
-      working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+      working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
       if: steps.cache-pipenv.outputs.cache-hit != 'true'
       env:
         PIPENV_VENV_IN_PROJECT: 1

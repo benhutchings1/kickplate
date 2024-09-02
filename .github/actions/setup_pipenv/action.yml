@@ -9,6 +9,7 @@ inputs:
   working-directory:
     type: string
     description: "Base directory of python project"
+    required: true
 runs:
   using: composite
   steps:

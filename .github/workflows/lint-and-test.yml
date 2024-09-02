@@ -26,17 +26,17 @@ jobs:
       - name: "Black"
         working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
         run: |
-          pipenv run black
+          pipenv run black-ci
       
       - name: "Isort"
         working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
         run: |
-          pipenv run isort
+          pipenv run isort-ci
       
       - name: "Flake8"
         working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
         run: |
-          pipenv run linting
+          pipenv run lint-ci
 
   test:
     runs-on: ubuntu-latest

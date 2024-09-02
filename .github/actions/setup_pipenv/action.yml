@@ -34,8 +34,11 @@ runs:
 
     - name: test steps
       shell: bash
+      working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
       run: |
+        ls
         echo "${{ steps.cache_key.outputs.cache_key }}"
+        echo "${{ hashFiles('Pipfile.lock') }}"
 
     - name: "Cache Pipenv Virtual Environment"
       id: cache-pipenv

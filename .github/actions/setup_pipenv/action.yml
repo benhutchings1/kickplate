@@ -45,5 +45,5 @@ runs:
       env:
         PIPENV_VENV_IN_PROJECT: 1
       run: |
-        python -m pipenv install --dev --system
+        python -m pipenv install --dev
   

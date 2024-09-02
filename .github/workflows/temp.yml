@@ -1,0 +1,12 @@
+on:
+  push:
+    branches:
+    - build/python_env
+
+jobs:
+  pipenv_cache:
+    name: "Setup Pipenv Cache"
+    runs-on: ubuntu-latest
+    steps:
+      - name: setup pipenv
+        uses: ./.github/actions/setup_pipenv/action.yml

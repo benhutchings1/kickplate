@@ -9,4 +9,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: setup pipenv
-        uses: ./.github/actions/setup_pipenv/action.yml
+        uses: ./.github/actions/setup_pipenv

@@ -32,11 +32,10 @@ runs:
     - name: "Cache Pipenv Virtual Environment"
       id: cache-pipenv
       uses: actions/cache@v3
-      needs: [ "cache_key" ]
       with:
         path: |
           ${{ github.workspace }}/${{ inputs.working-directory }}/.venv
-        key: ${{ needs.cache_key.outputs.cache_key }}
+        key: ${{ steps.cache_key.outputs.cache_key }}
     
     - name: "Install Dependencies"
       shell: bash

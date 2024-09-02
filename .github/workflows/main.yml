@@ -4,9 +4,6 @@ on:
     - build/python_env
 
 jobs:   
-  lint_and_test:
-    name: "Linting & Testing"
-    uses: ./.github/workflows/lint-and-test.yml
-    with:
-      python-project-path: "api"
-      python-version: "3.10"
+  api:
+    name: "API"
+    uses: ./.github/workflows/api/main.yml

@@ -35,6 +35,7 @@ runs:
       shell: bash
       working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
       run: |
+       echo "${{ github.workspace }}/${{ inputs.python-project-path }}"
         ls 
         cat Pipfile.lock
 

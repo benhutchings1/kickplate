@@ -32,6 +32,11 @@ runs:
       working-directory: ${{ github.workspace }}/${{ inputs.working-directory }}
       run: cache_key=${{ runner.os }}-pipenv-${{ hashFiles('Pipfile.lock') }} >> $GITHUB_OUTPUT
 
+    - name: test steps
+      shell: bash
+      run: |
+        echo "${{ steps.cache_key.outputs.cache_key }}"
+
     - name: "Cache Pipenv Virtual Environment"
       id: cache-pipenv
       uses: actions/cache@v3

@@ -1,7 +1,7 @@
 on:
   push:
     branches:
-    - main
+    - build/python_env
 
 jobs:   
   lint_and_test:

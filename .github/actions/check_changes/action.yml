@@ -19,6 +19,7 @@ runs:
         fetch-depth: 0  # Fetch all history for all branches
 
     - name: Fetch origin/main
+      shell: bash
       run: git fetch origin main
 
     - name: Detected changes

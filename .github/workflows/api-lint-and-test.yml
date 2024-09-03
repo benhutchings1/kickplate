@@ -51,10 +51,11 @@ jobs:
           python-version: ${{ inputs.python-version }}
       
       - name: Export requirements
-        run: |
-          pipenv requirements --dev > requirements.txt
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: pipenv requirements --dev > requirements.txt
       
       - name: Run audit
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
         run: pipenv run python -m pip_audit -r requirements.txt
 
   test:

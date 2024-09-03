@@ -15,7 +15,7 @@ jobs:
       infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Check for ${{ matrix.path }} changes
         id: changes
@@ -26,11 +26,11 @@ jobs:
   api:
     name: "API"
     needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.api_changed }}
+    if: ${{ needs.check-changes.outputs.api_changed }} == 'true'
     uses: ./.github/workflows/api-main.yml
         
   tf:
     name: "Infrastructure"
     needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.infra_changed }}
+    if: ${{ needs.check-changes.outputs.infra_changed }} == 'true'
     uses: ./.github/workflows/tf-main.yml

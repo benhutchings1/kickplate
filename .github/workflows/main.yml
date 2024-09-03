@@ -24,7 +24,7 @@ jobs:
           working-directory: ${{ matrix.path }}
       
       - name: temp
-        runs: |
+        run: |
           echo "${{ steps.changes.outputs.is_changed }}"
 
   api:

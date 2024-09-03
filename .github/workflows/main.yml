@@ -22,29 +22,15 @@ jobs:
         uses: ./.github/actions/check_changes
         with:
           working-directory: ${{ matrix.path }}
-      
-      - name: temp
-        run: |
-          echo "${{ steps.changes.outputs.is_changed }}"
-
-  temp:
-    needs: [ check-changes ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Testing
-        run: |
-          echo "${{ needs.check-changes.outputs.api_changed }}"
-          echo "${{ needs.check-changes.outputs.infra_changed }}"
-
 
   api:
     name: "API"
     needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.api_changed }} == "true"
+    if: ${{ needs.check-changes.outputs.api_changed }}
     uses: ./.github/workflows/api-main.yml
         
   tf:
     name: "Infrastructure"
     needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.infra_changed }} == "true"
+    if: ${{ needs.check-changes.outputs.infra_changed }}
     uses: ./.github/workflows/tf-main.yml

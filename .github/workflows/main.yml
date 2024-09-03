@@ -22,16 +22,16 @@ jobs:
         with:
           working-directory: ${{ matrix.path }}
 
-  api:
-    name: "API"
-    runs-on: ubuntu-latest
-    needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.api_changed }} == "true"
-    uses: ./.github/workflows/api-main.yml
+  # api:
+  #   name: "API"
+  #   runs-on: ubuntu-latest
+  #   needs: [ check-changes ]
+  #   if: ${{ needs.check-changes.outputs.api_changed }} == "true"
+  #   uses: ./.github/workflows/api-main.yml
         
-  tf:
-    name: "Infrastructure"
-    runs-on: ubuntu-latest
-    needs: [ check-changes ]
-    if: ${{ needs.check-changes.outputs.infra_changed }} == "true"
-    uses: ./.github/workflows/tf-main.yml
+  # tf:
+  #   name: "Infrastructure"
+  #   runs-on: ubuntu-latest
+  #   needs: [ check-changes ]
+  #   if: ${{ needs.check-changes.outputs.infra_changed }} == "true"
+  #   uses: ./.github/workflows/tf-main.yml

@@ -3,7 +3,31 @@ on:
     branches:
     - build/python_env
 
-jobs:   
+jobs:
   api:
     name: "API"
-    uses: ./.github/workflows/api-main.yml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check for api changes
+        id: changes
+        uses: ./.github/workflows/is_changed.yml
+        with:
+          workspace-directory: api
+      - name: API main
+        # if: ${{ steps.changes.outputs.is_changed }} == "true"
+        if: "0" == "1"
+        uses: ./.github/workflows/api-main.yml
+  tf:
+    name: "Infrastructure"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check for infrastructure changes
+        id: changes
+        uses: ./.github/workflows/is_changed.yml
+        with:
+          workspace-directory: infrastructure
+      - name: API main
+        # if: ${{ steps.changes.outputs.is_changed }} == "true"
+        uses: ./.github/workflows/tf-main.yml

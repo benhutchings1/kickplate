@@ -1,0 +1,39 @@
+on:
+  workflow_call:
+    inputs:
+      working_dir:
+        type: string
+        description: "Path to infrastructure project files"
+      
+      tf_version:
+        type: string
+        description: "Terraform version to use"
+        default: "3.10"
+      
+      tf_lint_version:
+        type: string
+        description: "TF-Lint version to use"
+        default: "v0.52.0"
+  
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.tf_version }}
+      
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+        with:
+          tflint_version: ${{ inputs.tf_lint_version }}
+      
+      - name: Show version
+        run: tflint --version
+      
+      - name: Run TFLint
+        working-directory: ${{ github.workspace }}/${{ inputs.working_dir }}
+        run: tflint -f compact

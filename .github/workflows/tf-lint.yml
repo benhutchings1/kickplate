@@ -27,13 +27,10 @@ jobs:
           terraform_version: ${{ inputs.tf_version }}
       
       - uses: terraform-linters/setup-tflint@v4
-        name: Setup TFLint
+        name: Setup tflint
         with:
           tflint_version: ${{ inputs.tf_lint_version }}
       
-      - name: Show version
-        run: tflint --version
-      
-      - name: Run TFLint
+      - name: Run tflint
         working-directory: ${{ github.workspace }}/${{ inputs.working_dir }}
         run: tflint -f compact

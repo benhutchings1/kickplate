@@ -4,31 +4,35 @@ on:
     - build/python_env
 
 jobs:
-  api:
-    name: "API"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Check for api changes
-        id: changes
-        uses: ./.github/actions/check_changes
-        with: 
-          working-directory: api
+  changes:
+    strategy:
+        matrix:
+          path: 
+            - "api"
+            - "infrastructure"
+      outputs:
+        # Collecting outputs using matrix context
+        api_changed: ${{ matrix.path == 'api' && steps.changes.outputs.is_changed || '' }}
+        infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
+      steps:
+        - uses: actions/checkout@v2
 
-      - name: API main
-        if: ${{ steps.changes.outputs.is_changed }} == "true"
-        uses: ./.github/workflows/api-main.yml
-  tf:
-    name: "Infrastructure"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Check for infrastructure changes
+        - name: Check for ${{ matrix.path }} changes
         id: changes
         uses: ./.github/actions/check_changes
         with:
-          working-directory: infrastructure
+          working-directory: ${{ matrix.path }}
 
-      - name: API main
-        if: ${{ steps.changes.outputs.is_changed }} == "true"
-        uses: ./.github/workflows/tf-main.yml
+  api:
+    name: "API"
+    runs-on: ubuntu-latest
+    needs: [ changes ]
+    if: ${{ needs.changes..outputs.api_changed }} == "true"
+    uses: ./.github/workflows/api-main.yml
+        
+  tf:
+    name: "Infrastructure"
+    runs-on: ubuntu-latest
+    needs: [ changes ]
+    if: ${{ needs.changes..outputs.infra_changed }} == "true"
+    uses: ./.github/workflows/tf-main.yml

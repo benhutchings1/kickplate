@@ -31,8 +31,11 @@ jobs:
       - name: test
         shell: bash
         run: |
-          echo "'${{ needs.check-changes.outputs.api_changed }}'=='true'"
-          echo "${{ needs.check-changes.outputs.infra_changed }}"
+          if ${{ needs.check-changes.outputs.api_changed }}; then
+            echo "changed"
+          else
+            echo "not changed"
+          fi
 
 
   api:

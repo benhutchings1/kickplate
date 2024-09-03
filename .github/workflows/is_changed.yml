@@ -20,7 +20,7 @@ jobs:
         shell: bash
         id: changes
         run: |
-          if git diff --quiet main -- "infrastructure/"; then
+          if git diff --quiet main -- "${{ inputs.workspace-directory }}"; then
             echo "is_changed=false" >> $GITHUB_OUTPUT
           else
             echo "is_changed=true" >> $GITHUB_OUTPUT

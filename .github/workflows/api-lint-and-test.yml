@@ -38,6 +38,25 @@ jobs:
         run: |
           pipenv run lint-ci
 
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setup pipenv
+        uses: ./.github/actions/setup_pipenv
+        with:
+          working-directory: ${{ inputs.python-project-path }}
+          python-version: ${{ inputs.python-version }}
+      
+      - name: Export requirements
+        run: |
+          pipenv requirements --dev > requirements.txt
+      
+      - name: Run audit
+        run: pipenv run python -m pip_audit -r requirements.txt
+
   test:
     runs-on: ubuntu-latest
 

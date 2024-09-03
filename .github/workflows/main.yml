@@ -25,12 +25,12 @@ jobs:
 
   api:
     name: "API"
-    # needs: [ check-changes ]
-    # if: ${{ needs.check-changes.outputs.api_changed }} == "true"
+    needs: [ check-changes ]
+    if: ${{ needs.check-changes.outputs.api_changed }} == "true"
     uses: ./.github/workflows/api-main.yml
         
   tf:
     name: "Infrastructure"
-    # needs: [ check-changes ]
-    # if: ${{ needs.check-changes.outputs.infra_changed }} == "true"
+    needs: [ check-changes ]
+    if: ${{ needs.check-changes.outputs.infra_changed }} == "true"
     uses: ./.github/workflows/tf-main.yml

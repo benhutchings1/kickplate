@@ -10,17 +10,17 @@ jobs:
           path: 
             - "api"
             - "infrastructure"
-      outputs:
-        api_changed: ${{ matrix.path == 'api' && steps.changes.outputs.is_changed || '' }}
-        infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
-      steps:
-        - uses: actions/checkout@v2
+    outputs:
+      api_changed: ${{ matrix.path == 'api' && steps.changes.outputs.is_changed || '' }}
+      infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
+    steps:
+      - uses: actions/checkout@v2
 
-        - name: Check for ${{ matrix.path }} changes
-        id: changes
-        uses: ./.github/actions/check_changes
-        with:
-          working-directory: ${{ matrix.path }}
+      - name: Check for ${{ matrix.path }} changes
+      id: changes
+      uses: ./.github/actions/check_changes
+      with:
+        working-directory: ${{ matrix.path }}
 
   api:
     name: "API"

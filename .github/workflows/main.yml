@@ -31,7 +31,7 @@ jobs:
       - name: test
         shell: bash
         run: |
-          echo "${{ needs.check-changes.outputs.api_changed }}"
+          echo "'${{ needs.check-changes.outputs.api_changed }}'=='true'"
           echo "${{ needs.check-changes.outputs.infra_changed }}"
 
 

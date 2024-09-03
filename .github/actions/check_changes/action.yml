@@ -25,7 +25,7 @@ runs:
     - name: Detected changes
       shell: bash
       run: |
-        echo "===== Changed Detected ====="
+        echo "===== Changes Detected ====="
         git diff --name-only origin/main -- ${{ inputs.working-directory }}
         echo "============================"
 

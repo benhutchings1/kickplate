@@ -14,9 +14,10 @@ jobs:
         uses: ./.github/actions/check_changes
         with: 
           working-directory: api
-      # - name: API main
-      #   if: ${{ steps.changes.outputs.is_changed }} == "true"
-      #   uses: ./.github/workflows/api-main.yml
+
+      - name: API main
+        if: ${{ steps.changes.outputs.is_changed }} == "true"
+        uses: ./.github/workflows/api-main.yml
   tf:
     name: "Infrastructure"
     runs-on: ubuntu-latest
@@ -27,6 +28,7 @@ jobs:
         uses: ./.github/actions/check_changes
         with:
           working-directory: infrastructure
-      # - name: API main
-      #   # if: ${{ steps.changes.outputs.is_changed }} == "true"
-      #   uses: ./.github/workflows/tf-main.yml
+
+      - name: API main
+        if: ${{ steps.changes.outputs.is_changed }} == "true"
+        uses: ./.github/workflows/tf-main.yml

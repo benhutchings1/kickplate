@@ -13,6 +13,7 @@ jobs:
     outputs:
       api_changed: ${{ matrix.path == 'api' && steps.changes.outputs.is_changed || '' }}
       infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 

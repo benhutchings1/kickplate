@@ -4,5 +4,5 @@ on:
 jobs:
   lint_and_test:
     name: "Linting & Testing"
-    uses: ./.github/workflows/tf-lint-and-test.yml
+    uses: ./.github/workflows/tf-lint.yml
     

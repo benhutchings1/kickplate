@@ -1,0 +1,76 @@
+on:
+  workflow_call:
+    inputs:
+      python-project-path:
+        type: string
+        description: "Path to python project files"
+      
+      python-version:
+        type: string
+        description: "Python version to use"
+        default: "3.10"
+  
+jobs:
+  linting:
+    runs-on: ubuntu-latest
+      
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup pipenv
+        uses: ./.github/actions/setup_pipenv
+        with:
+          working-directory: ${{ inputs.python-project-path }}
+          python-version: ${{ inputs.python-version }}
+
+      - name: "Black"
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: |
+          pipenv run black-ci
+      
+      - name: "Isort"
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: |
+          pipenv run isort-ci
+      
+      - name: "Flake8"
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: |
+          pipenv run lint-ci
+
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup pipenv
+        uses: ./.github/actions/setup_pipenv
+        with:
+          working-directory: ${{ inputs.python-project-path }}
+          python-version: ${{ inputs.python-version }}
+      
+      - name: Export requirements
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: pipenv requirements --dev > requirements.txt
+      
+      - name: Run audit
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: pipenv run python -m pip_audit -r requirements.txt
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup pipenv
+        uses: ./.github/actions/setup_pipenv
+        with:
+          working-directory: ${{ inputs.python-project-path }}
+          python-version: ${{ inputs.python-version }}
+
+      - name: "Testing"
+        working-directory: ${{ github.workspace }}/${{ inputs.python-project-path }}
+        run: |
+          pipenv run tests

@@ -1,0 +1,36 @@
+on:
+  push:
+    branches:
+    - build/python_env
+
+jobs:
+  check-changes:
+    strategy:
+        matrix:
+          path: 
+            - "api"
+            - "infrastructure"
+    outputs:
+      api_changed: ${{ matrix.path == 'api' && steps.changes.outputs.is_changed || '' }}
+      infra_changed: ${{ matrix.path == 'infrastructure' && steps.changes.outputs.is_changed || '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Check for ${{ matrix.path }} changes
+        id: changes
+        uses: ./.github/actions/check_changes
+        with:
+          working-directory: ${{ matrix.path }}
+
+  api:
+    name: "API"
+    needs: [ check-changes ]
+    if: needs.check-changes.outputs.api_changed == 'true'
+    uses: ./.github/workflows/api-main.yml
+        
+  tf:
+    name: "Infrastructure"
+    needs: [ check-changes ]
+    if: needs.check-changes.outputs.infra_changed == 'true'
+    uses: ./.github/workflows/tf-main.yml

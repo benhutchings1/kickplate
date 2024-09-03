@@ -8,7 +8,7 @@ on:
       tf_version:
         type: string
         description: "Terraform version to use"
-        default: "3.10"
+        default: "1.8.5"
       
       tf_lint_version:
         type: string

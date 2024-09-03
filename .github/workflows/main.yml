@@ -27,6 +27,16 @@ jobs:
         run: |
           echo "${{ steps.changes.outputs.is_changed }}"
 
+  temp:
+    needs: [ check-changes ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Testing
+        run: |
+          echo "${{ needs.check-changes.outputs.api_changed }}"
+          echo "${{ needs.check-changes.outputs.infra_changed }}"
+
+
   api:
     name: "API"
     needs: [ check-changes ]

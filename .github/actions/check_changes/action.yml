@@ -14,11 +14,16 @@ runs:
   using: composite
   steps:
     - uses: actions/checkout@v2
+    - name: Detected changes
+      shell: bash
+      run: |
+        git diff --name-only origin/main -- api/
+
     - name: Check for changes
       shell: bash
       id: changes
       run: |
-        if git diff --quiet main -- "${{ inputs.workspace-directory }}"; then
+        if git diff --quiet origin/main -- "${{ inputs.workspace-directory }}"; then
           echo "is_changed=false" >> $GITHUB_OUTPUT
         else
           echo "is_changed=true" >> $GITHUB_OUTPUT

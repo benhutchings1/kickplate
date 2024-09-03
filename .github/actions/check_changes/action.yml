@@ -16,7 +16,7 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # Fetch all history for all branches
+        fetch-depth: 0
 
     - name: Fetch origin/main
       shell: bash
@@ -25,13 +25,13 @@ runs:
     - name: Detected changes
       shell: bash
       run: |
-        git diff --name-only origin/main -- api/
+        git diff --name-only origin/main -- ${{ inputs.working-directory }}
 
     - name: Check for changes
       shell: bash
       id: changes
       run: |
-        if git diff origin/main HEAD -- "${{ inputs.workspace-directory }}"; then
+        if git diff origin/main HEAD -- "${{ inputs.working-directory }}"; then
           echo "is_changed=false" >> $GITHUB_OUTPUT
         else
           echo "is_changed=true" >> $GITHUB_OUTPUT

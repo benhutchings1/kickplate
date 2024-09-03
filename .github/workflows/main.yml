@@ -11,9 +11,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check for api changes
         id: changes
-        uses: ./.github/workflows/is_changed.yml
-        with:
-          workspace-directory: api
+        uses: ./.github/actions/check_changes
+        with: 
+          working-directory: api
       # - name: API main
       #   if: ${{ steps.changes.outputs.is_changed }} == "true"
       #   uses: ./.github/workflows/api-main.yml
@@ -24,9 +24,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Check for infrastructure changes
         id: changes
-        uses: ./.github/workflows/is_changed.yml
+        uses: ./.github/actions/check_changes
         with:
-          workspace-directory: infrastructure
+          working-directory: infrastructure
       # - name: API main
       #   # if: ${{ steps.changes.outputs.is_changed }} == "true"
       #   uses: ./.github/workflows/tf-main.yml

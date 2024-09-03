@@ -1,0 +1,25 @@
+name: "Check Changes"
+description: "Checks for changes against HEAD in given directory"
+
+inputs:
+  working-directory:
+    type: string
+    description: "Base directory of python project"
+    required: true
+outputs:
+  is_changed:
+    value: ${{ steps.changes.outputs.is_changed }}
+    description: "Whether changed have occured"
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v2
+    - name: Check for changes
+      shell: bash
+      id: changes
+      run: |
+        if git diff --quiet main -- "${{ inputs.workspace-directory }}"; then
+          echo "is_changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "is_changed=true" >> $GITHUB_OUTPUT
+        fi

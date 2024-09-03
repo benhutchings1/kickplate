@@ -22,6 +22,10 @@ jobs:
         uses: ./.github/actions/check_changes
         with:
           working-directory: ${{ matrix.path }}
+      
+      - name: temp
+        runs: |
+          echo "${{ steps.changes.outputs.is_changed }}"
 
   api:
     name: "API"

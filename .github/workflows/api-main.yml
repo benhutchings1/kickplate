@@ -1,0 +1,10 @@
+on:
+  workflow_call:
+
+jobs:
+  lint_and_test:
+    name: "Linting & Testing"
+    uses: ./.github/workflows/api-lint-test.yml
+    with:
+      python-project-path: "api"
+      python-version: "3.10"

@@ -1,0 +1,136 @@
+{{- $kickplateFullName := printf "%s-%s" .Values.global.appName .Values.keycloak.appName }}
+{{- $kickplateDBFullName := printf "%s-db" $kickplateFullName -}}
+{{- if .Values.keycloak.should_deploy }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $kickplateDBFullName }}-init
+  {{- if not (eq .Values.keycloak.namespace nil) }}
+  namespace: {{ .Values.keycloak.namespace | quote }}
+  {{- end }}
+data:
+  {{ $kickplateDBFullName }}-init.sql: |
+    CREATE USER {{ .Values.keycloak.keycloakDB.username }} WITH PASSWORD 'password';
+    CREATE DATABASE {{ .Values.keycloak.keycloakDB.dbName }};
+    GRANT ALL PRIVILEGES ON DATABASE {{ .Values.keycloak.keycloakDB.dbName }} TO {{ .Values.keycloak.keycloakDB.username }};
+{{ end }}
+---
+{{- if .Values.keycloak.should_deploy }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $kickplateDBFullName }}
+  {{- if not (eq .Values.keycloak.namespace nil) }}
+  namespace: {{ .Values.keycloak.namespace | quote }}
+  {{- end }}
+  labels:
+    service: {{ $kickplateDBFullName }}
+spec:
+  replicas: {{ .Values.keycloak.keycloakDB.replicas }}
+  selector:
+    matchLabels:
+      service: {{ $kickplateDBFullName }}
+  template:
+    metadata:
+      labels:
+        service: {{ $kickplateDBFullName }}
+    spec:
+      containers:
+        - name: {{ $kickplateDBFullName }}
+          image: {{ .Values.keycloak.keycloakDB.imageName }}:{{ .Values.keycloak.keycloakDB.imageID }}
+          ports:
+            - containerPort: {{ .Values.keycloak.keycloakDB.port }}
+          env:
+            - name: POSTGRES_PASSWORD
+              value: password
+          volumeMounts:
+            - mountPath: /docker-entrypoint-initdb.d
+              name: db-init
+      volumes:
+        - name: db-init
+          configMap:
+            name: {{ $kickplateDBFullName }}-init
+{{ end }}
+---
+{{- if .Values.keycloak.should_deploy }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $kickplateFullName }}
+  {{- if not (eq .Values.keycloak.namespace nil) }}
+  namespace: {{ .Values.keycloak.namespace | quote }}
+  {{- end }}
+  labels:
+    service: {{ $kickplateFullName }}
+spec:
+  replicas: {{ .Values.keycloak.keycloak.replicas }}
+  selector:
+    matchLabels:
+      service: {{ $kickplateFullName }}
+  template:
+    metadata:
+      labels:
+        service: {{ $kickplateFullName }}
+    spec:
+      containers:
+        - name: keycloak
+          image: {{ .Values.keycloak.keycloak.imageName }}:{{ .Values.keycloak.keycloak.imageID }}
+          ports:
+            - containerPort: {{ .Values.keycloak.keycloak.port }}
+          args: ["start-dev"]
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: admin
+            - name: KC_HTTP_ENABLED
+              value: "true"
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_USERNAME
+              value: postgres
+            - name: KC_DB_PASSWORD
+              value: password
+            - name: KC_DB_URL_DATABASE
+              value: {{ .Values.keycloak.keycloakDB.dbName }}
+            - name: KC_DB_URL_PORT
+              value: {{ .Values.keycloak.keycloakDB.port | quote }}
+            - name: KC_DB_URL_HOST
+              value: {{ $kickplateDBFullName }}.{{ .Values.keycloak.namespace }}.svc.cluster.local
+{{ end }}
+---
+{{- if .Values.keycloak.should_deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $kickplateFullName }}
+  {{- if not (eq .Values.keycloak.namespace nil) }}
+  namespace: {{ .Values.keycloak.namespace | quote }}
+  {{- end }}
+spec:
+  selector:
+    service: {{ $kickplateFullName }}
+  ports:
+    - protocol: TCP
+      name: {{ $kickplateFullName }}
+      port: {{ .Values.keycloak.keycloak.port }}
+      targetPort: {{ .Values.keycloak.keycloak.port }}
+{{ end }}
+---
+{{- if .Values.keycloak.should_deploy }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $kickplateDBFullName }}
+  {{- if not (eq .Values.keycloak.namespace nil) }}
+  namespace: {{ .Values.keycloak.namespace | quote }}
+  {{- end }}
+spec:
+  selector:
+    service: {{ $kickplateDBFullName }}
+  ports:
+    - protocol: TCP
+      name: {{ $kickplateDBFullName }}
+      port: {{ .Values.keycloak.keycloakDB.port }}
+      targetPort: {{ .Values.keycloak.keycloakDB.port }}
+{{ end }}

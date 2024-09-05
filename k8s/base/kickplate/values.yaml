@@ -14,9 +14,10 @@ namespaces:
     - kickplate-api
     - kickplate-dashboard
     - kickplate-registry
+    - kickplate-keycloak
 
 networking:
-  should_deploy: true
+  should_deploy: false
 
 registry:
   should_deploy: false
@@ -29,7 +30,7 @@ registry:
   port: 5000
 
 api:
-  should_deploy: true
+  should_deploy: false
   subdomain: api
   namespace: kickplate-api
   appName: api
@@ -49,6 +50,25 @@ dashboard:
   imageID: latest
   port: 4000
   serviceAccountName: sa-dashboard
+
+keycloak:
+  should_deploy: true
+  namespace: kickplate-keycloak
+  appName: keycloak
+
+  keycloak:
+    port: 8080
+    replicas: 1
+    imageName: quay.io/keycloak/keycloak
+    imageID: latest
+
+  keycloakDB:
+    port: 5432
+    replicas: 1
+    dbName: keycloak_data
+    username: kc
+    imageName: postgres
+    imageID: latest
 
 service-account:
   should_deploy: true

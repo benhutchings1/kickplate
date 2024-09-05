@@ -7,5 +7,5 @@ resources:
 helmCharts:
   - name: kickplate
     path: ../../base/kickplate
-    valuesFile: values-dev.yaml
+    valuesFile: values.yaml
     releaseName: kickplate-v0.1

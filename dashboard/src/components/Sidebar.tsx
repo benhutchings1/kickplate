@@ -7,7 +7,6 @@ import ThemeToggleSwitch from "./ThemeToggler";
 import { pageMap } from "../pages/PageDirectory";
 import Offcanvas from 'react-bootstrap/Offcanvas';
 import { useState } from 'react';
-import Button from 'react-bootstrap/Button';
 
 
 interface Props {
@@ -26,11 +25,9 @@ export const Sidebar = (props: Props) => {
   return (
     <>
       <div className="navbar">
-        <div className="button-wrapper">
-          <Button onClick={handleShow} className="open-bar-button">
-            <FontAwesomeIcon icon={faBars} className="open-bar-icon"/>
-          </Button>
-        </div>
+        <button onClick={handleShow} className="open-bar-button">
+          <FontAwesomeIcon icon={faBars} className="open-bar-icon"/>
+        </button>
       </div>
       <div className="main-canvas">
         <div className="p-3">

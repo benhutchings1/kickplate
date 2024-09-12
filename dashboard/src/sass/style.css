@@ -103,8 +103,12 @@ input[type=text] {
   width: 100%;
   border-bottom: 4%;
 }
-.navbar .button-wrapper {
-  margin: 0% 5%;
+.navbar .open-bar-button {
+  background-color: transparent;
+  box-shadow: none;
+  border: none;
+  padding: 0 4% 0 2%;
+  border-right: 1px solid;
 }
 
 .canvas-container {
@@ -120,9 +124,13 @@ input[type=text] {
 .dark .navbar {
   background-color: rgb(24, 24, 33);
 }
-.dark .navbar .navbar .button-wrapper > * {
+.dark .navbar .navbar > * {
   background-color: rgb(16, 16, 19);
   border: none;
+}
+.dark .navbar .open-bar-button {
+  border-color: rgb(177, 175, 175);
+  color: white;
 }
 .dark .main-canvas {
   background-color: rgb(31, 31, 43);
@@ -132,9 +140,13 @@ input[type=text] {
 .light .navbar {
   background-color: rgb(118, 125, 206);
 }
-.light .navbar .navbar .button-wrapper > * {
+.light .navbar .navbar > * {
   background-color: rgb(61, 17, 236);
   border: none;
+}
+.light .navbar .open-bar-button {
+  border-color: rgb(177, 175, 175);
+  color: white;
 }
 .light .main-canvas {
   background-color: rgb(238, 238, 238);

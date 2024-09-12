@@ -3,8 +3,13 @@
 @mixin navbarTheme($themeMap) {
     background-color: map-get($map: $themeMap, $key: "secondary");
 
-    .navbar .button-wrapper > * {
+    .navbar > * {
         background-color: map-get($map: $themeMap, $key: "tertiary");
         border: none;
+    }
+
+    .open-bar-button {
+        border-color: rgb(177, 175, 175);
+        color: white;
     }
 }

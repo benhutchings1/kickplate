@@ -7,7 +7,7 @@ from com_utils.logger import LoggingLevel
 from config import ApiSettings
 
 
-class K8_Client:
+class K8Client:
     def __init__(self) -> None:
         self.k8_client_cfg = client.Configuration()
         self.k8_client_cfg.host = ApiSettings.kube_host

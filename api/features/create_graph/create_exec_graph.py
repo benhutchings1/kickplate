@@ -9,14 +9,14 @@ from com_utils.error_handling import CustomError
 from com_utils.http import HttpCodes
 from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 from routes.create_graph.exec_graph_model import ExecGraph, ExecGraphStep
 
 GRAPH_TYPING = dict[str, Union[str, dict[str, Union[str, dict]]]]
 
 
 class CreateExecGraph:
-    def __init__(self, k8s_client: K8_Client) -> None:
+    def __init__(self, k8s_client: K8Client) -> None:
         self.__k8s_client = k8s_client
 
     def submit_graph(self, json_def: GRAPH_TYPING) -> str:

@@ -7,7 +7,7 @@ from requests import Request
 
 from app import app
 from auth.auth_flow import oauth_scheme
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 
 GRAPH_TYPING = dict[str, Union[str, dict[str, Union[str, dict]]]]
 
@@ -29,8 +29,8 @@ def test_client() -> TestClient:
 
 
 @pytest.fixture
-def k8s_client() -> K8_Client:
-    client = K8_Client()
+def k8s_client() -> K8Client:
+    client = K8Client()
     client.create_resource = MagicMock()
     client.get_resource = MagicMock()
     return client

@@ -7,13 +7,13 @@ from com_utils.error_handling import CustomError
 from com_utils.http import HttpCodes
 from com_utils.logger import Loggers, LoggingLevel
 from config import ApiSettings
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 
 from .graph_status_model import GraphStatusModel, StepStatus
 
 
 class GraphStatus:
-    def __init__(self, k8s_client: K8_Client):
+    def __init__(self, k8s_client: K8Client):
         """
         Top level API function for getting status of an execution graph\n
         Inputs\n

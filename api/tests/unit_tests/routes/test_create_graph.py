@@ -9,7 +9,7 @@ from kubernetes.client.exceptions import ApiException
 from app import app
 from com_utils.backup_exception import BackupException
 from com_utils.error_handling import CustomError
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 from routes.create_graph.create_exec_graph import CreateExecGraph
 from tests.unit_tests.conftest import MockHTTPResponse, mock_k8s_factory
 
@@ -69,13 +69,13 @@ def sample_formatted_graph_def(sample_graph_def: GRAPH_TYPING) -> GRAPH_TYPING:
 def test_route_should_return_graph_name_on_correct_graph_definition(
     test_client: TestClient, sample_graph_def: GRAPH_TYPING
 ):
-    app.dependency_overrides[K8_Client] = mock_k8s_factory(None)
+    app.dependency_overrides[K8Client] = mock_k8s_factory(None)
     resp = test_client.post("/graph/create_graph", json=sample_graph_def)
     assert json.loads(resp.content)["graphname"] == sample_graph_def["graphname"]
 
 
 def test_should_send_correct_graph_definition_request(
-    k8s_client: K8_Client,
+    k8s_client: K8Client,
     sample_graph_def: GRAPH_TYPING,
     sample_formatted_graph_def: GRAPH_TYPING,
 ):
@@ -106,11 +106,11 @@ def test_should_send_correct_graph_definition_request(
 
 def test_should_raise_custom_error_on_failed_k8s_conn(sample_graph_def: GRAPH_TYPING):
     with pytest.raises(BackupException):
-        CreateExecGraph(K8_Client()).submit_graph(sample_graph_def)
+        CreateExecGraph(K8Client()).submit_graph(sample_graph_def)
 
 
 def test_should_raise_error_on_invalid_graph_name(
-    k8s_client: K8_Client, sample_graph_def: GRAPH_TYPING
+    k8s_client: K8Client, sample_graph_def: GRAPH_TYPING
 ):
     sample_graph_def["graphname"] = "@?%*ndsiuhndusajiodjsoSABDIA"
 
@@ -119,7 +119,7 @@ def test_should_raise_error_on_invalid_graph_name(
 
 
 def test_should_raise_error_on_duplicate_graph_name(
-    k8s_client: K8_Client,
+    k8s_client: K8Client,
     sample_graph_def: GRAPH_TYPING,
 ):
     k8s_client.create_resource = cast(MagicMock, k8s_client.create_resource)
@@ -131,14 +131,14 @@ def test_should_raise_error_on_duplicate_graph_name(
         CreateExecGraph(k8s_client).submit_graph(sample_graph_def)
 
 
-def test_should_raise_error_on_missing_graphname(k8s_client: K8_Client):
+def test_should_raise_error_on_missing_graphname(k8s_client: K8Client):
     bad_graph_def = {"thisis": "bad"}
 
     with pytest.raises(CustomError) as exc:
         CreateExecGraph(k8s_client).submit_graph(bad_graph_def)
 
 
-def test_should_raise_error_on_missing_steps(k8s_client: K8_Client):
+def test_should_raise_error_on_missing_steps(k8s_client: K8Client):
     bad_graph_def = {"graphname": "bad"}
 
     with pytest.raises(CustomError) as exc:
@@ -146,7 +146,7 @@ def test_should_raise_error_on_missing_steps(k8s_client: K8_Client):
 
 
 def test_should_raise_error_on_bad_steps_definition_not_list(
-    k8s_client: K8_Client,
+    k8s_client: K8Client,
 ):
     bad_graph_def = {"graphname": "bad", "steps": {"thing": "notgood"}}
 
@@ -155,7 +155,7 @@ def test_should_raise_error_on_bad_steps_definition_not_list(
 
 
 def test_should_raise_error_on_bad_steps_definition_not_model_valid(
-    k8s_client: K8_Client,
+    k8s_client: K8Client,
 ):
     bad_graph_def = {"graphname": "bad", "steps": [{"this": "bad"}]}
 

@@ -9,7 +9,7 @@ from com_utils.error_handling import catch_all_exceptions
 from com_utils.http import HttpCodes
 from com_utils.logger import modify_uvicorn_logging_config
 from config import ApiSettings
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 
 # Import routes functionality
 from routes.create_graph.create_exec_graph import CreateExecGraph
@@ -41,7 +41,7 @@ app.middleware("http")(catch_all_exceptions)
 async def create_execution_graph(
     graph_def: dict,
     token: Annotated[str, Depends(oauth_scheme)],
-    kubernetes_client: Annotated[K8_Client, Depends(K8_Client)],
+    kubernetes_client: Annotated[K8Client, Depends(K8Client)],
 ) -> CreateGraphResponseModel:
     """
     Top level API endpoint for submitting an execution graph\n
@@ -65,7 +65,7 @@ async def create_execution_graph(
 async def run_execution_graph(
     model_name: str,
     token: Annotated[str, Depends(oauth_scheme)],
-    kubernetes_client: Annotated[K8_Client, Depends(K8_Client)],
+    kubernetes_client: Annotated[K8Client, Depends(K8Client)],
 ) -> RunGraphResponseModel:
     """
     Top level API function for running an execution graph,
@@ -89,7 +89,7 @@ async def run_execution_graph(
 async def get_execution_status(
     execution_id: str,
     token: Annotated[str, Depends(oauth_scheme)],
-    kubernetes_client: Annotated[K8_Client, Depends(K8_Client)],
+    kubernetes_client: Annotated[K8Client, Depends(K8Client)],
 ) -> GraphStatusReponseModel:
     """
     Top level API function for getting status of an execution graph\n

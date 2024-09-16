@@ -9,7 +9,7 @@ from mock import patch
 
 from app import app
 from com_utils.error_handling import CustomError
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 from routes.run_graph.run_exec_graph import RunGraph
 from tests.unit_tests.conftest import MockHTTPResponse, mock_k8s_factory
 from com_utils.http import HttpCodes
@@ -99,14 +99,14 @@ def graph_name() -> str:
 def test_route_should_return_id_of_execution(
     test_client: TestClient, graph_name: str, sample_graph_definition: GRAPH_TYPING
 ):
-    app.dependency_overrides[K8_Client] = mock_k8s_factory(sample_graph_definition)
+    app.dependency_overrides[K8Client] = mock_k8s_factory(sample_graph_definition)
     resp = test_client.post(f"/graph/{graph_name}")
     assert json.loads(resp.content)["execution_id"][0:15] == graph_name
 
 
 @patch("config.ApiSettings", MockApiSettings)
 def test_should_send_correct_graph_definition_request(
-    k8s_client: K8_Client,
+    k8s_client: K8Client,
     graph_name: str,
     sample_graph_definition: GRAPH_TYPING,
     sample_formatted_workflow: GRAPH_TYPING,
@@ -140,7 +140,7 @@ def test_should_send_correct_graph_definition_request(
 
 
 def test_should_raise_error_on_non_existent_graph(
-    k8s_client: K8_Client, graph_name: str
+    k8s_client: K8Client, graph_name: str
 ):
     k8s_client.get_resource = cast(MagicMock, k8s_client.get_resource)
     k8s_client.get_resource.side_effect = ApiException(
@@ -154,7 +154,7 @@ def test_should_raise_error_on_non_existent_graph(
 
 
 def test_should_raise_error_on_already_existing_workflow(
-    k8s_client: K8_Client, graph_name: str
+    k8s_client: K8Client, graph_name: str
 ):
     k8s_client.create_resource = cast(MagicMock, k8s_client.create_resource)
     k8s_client.create_resource.side_effect = ApiException(
@@ -168,7 +168,7 @@ def test_should_raise_error_on_already_existing_workflow(
 
 
 def test_should_raise_error_on_non_existent_graph(
-    k8s_client: K8_Client, graph_name: str
+    k8s_client: K8Client, graph_name: str
 ):
     k8s_client.get_resource = cast(MagicMock, k8s_client.get_resource)
     k8s_client.get_resource.side_effect = ApiException(
@@ -182,7 +182,7 @@ def test_should_raise_error_on_non_existent_graph(
 
 
 def test_should_allow_unknown_errors_when_create_resource(
-    k8s_client: K8_Client, graph_name: str
+    k8s_client: K8Client, graph_name: str
 ):
     exc = ValueError("This is an error")
     k8s_client.create_resource = cast(MagicMock, k8s_client.create_resource)
@@ -196,7 +196,7 @@ def test_should_allow_unknown_errors_when_create_resource(
 
 
 def test_should_allow_unknown_errors_when_get_resource(
-    k8s_client: K8_Client, graph_name: str
+    k8s_client: K8Client, graph_name: str
 ):
     exc = ValueError("This is an error")
     k8s_client.get_resource = cast(MagicMock, k8s_client.get_resource)

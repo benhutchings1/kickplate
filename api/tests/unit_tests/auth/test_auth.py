@@ -10,7 +10,7 @@ import json
 import jwt
 from mock import patch
 from app import app
-from external.kubenetes import K8_Client
+from api.external.cluster import K8Client
 from tests.unit_tests.conftest import MockHTTPResponse, mock_k8s_factory
 
 

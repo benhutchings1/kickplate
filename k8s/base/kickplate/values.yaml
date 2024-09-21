@@ -52,7 +52,7 @@ dashboard:
   serviceAccountName: sa-dashboard
 
 keycloak:
-  should_deploy: true
+  should_deploy: false
   namespace: kickplate-keycloak
   appName: keycloak
 
@@ -70,8 +70,17 @@ keycloak:
     imageName: postgres
     imageID: latest
 
-service-account:
+OAuthProxy:
   should_deploy: true
+  namespace: kickplate-keycloak
+  appName: auth-proxy
+  imageName: quay.io/oauth2-proxy/oauth2-proxy
+  imageID: latest
+  replicas: 1
+  port: 5000
+
+service-account:
+  should_deploy: false
   serviceAccounts:
     - name: sa-api
       giveRoles: ["ExecutionGraphReader"]

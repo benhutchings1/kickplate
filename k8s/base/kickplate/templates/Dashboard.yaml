@@ -1,6 +1,6 @@
 {{- if .Values.dashboard.should_deploy -}}
 {{- $dashboardFullName := printf "%s-%s" .Values.global.appName .Values.dashboard.appName -}}
-dashboardVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $dashboardFullName | quote }}

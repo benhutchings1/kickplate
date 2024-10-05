@@ -1,0 +1,27 @@
+# permissions for end users to edit edagruns.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: graphmanager
+    app.kubernetes.io/managed-by: kustomize
+  name: edagrun-editor-role
+rules:
+- apiGroups:
+  - edag.kickplate.com
+  resources:
+  - edagruns
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - edag.kickplate.com
+  resources:
+  - edagruns/status
+  verbs:
+  - get

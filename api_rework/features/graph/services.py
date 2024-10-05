@@ -1,5 +1,5 @@
 from external.cluster import KubernetesClient
-from .dtos import ExecutionGraph, RunGraphParameters, RunGraphDetails, GraphStatusDetails
+from .models import EDAG, RunGraphParameters, RunGraphDetails, GraphStatusDetails
 
 
 class GraphServices:
@@ -7,13 +7,13 @@ class GraphServices:
         self._kubernetes_client = KubernetesClient()
 
     @staticmethod
-    async def create_execution_graph(graph_name: str, graph: ExecutionGraph) -> ExecutionGraph:
+    async def create_edag(graph_name: str, graph: EDAG) -> EDAG:
         pass
 
     @staticmethod
-    async def run_execution_graph(graph_name: str, run_parameters: RunGraphParameters) -> RunGraphDetails:
+    async def run_edag(graph_name: str, run_parameters: RunGraphParameters) -> RunGraphDetails:
         pass
 
     @staticmethod
-    async def get_execution_graph_status(graph_name: str) -> GraphStatusDetails:
+    async def get_edag_status(graph_name: str) -> GraphStatusDetails:
         pass

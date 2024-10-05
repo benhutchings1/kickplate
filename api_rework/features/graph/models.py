@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import List
 
 
-class ExecutionGraphStep(BaseModel):
+class EDAGStep(BaseModel):
     stepname: str = Field(
         description="Name of step identify, must be unique in the graph"
     )
@@ -14,7 +14,7 @@ class ExecutionGraphStep(BaseModel):
         description="Steps dependent on, will fail if a dependency fails", default=[]
     )
     env: dict[str, str] = Field(
-        description="Environment variable to be accessible to executions\
+        description="Environment variable accessible by all replicas of this step\
             in this step",
         default={},
     )
@@ -22,9 +22,9 @@ class ExecutionGraphStep(BaseModel):
     command: List[str] = Field(description="Commands to run on startup", default=[])
 
 
-class ExecutionGraph(BaseModel):
+class EDAG(BaseModel):
     graphname: str = Field(description="Name of graph, must be unique")
-    steps: List[ExecutionGraphStep] = Field(description="Steps to execute", min_length=1)
+    steps: List[EDAGStep] = Field(description="Steps to execute", min_length=1)
 
 
 class RunGraphParameters(BaseModel):
@@ -32,7 +32,7 @@ class RunGraphParameters(BaseModel):
 
 
 class RunGraphDetails(BaseModel):
-    execution_id: str
+    _id: str
 
 
 class StepStatus(BaseModel):

@@ -18,12 +18,10 @@ package controller
 
 import (
 	"context"
-	"fmt"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
+	"github.com/benhutchings1/kickplate/builders"
 )
 
 // EDAGRunReconciler reconciles a ExecutionGraphRun object
@@ -47,6 +46,8 @@ type EDAGRunReconciler struct {
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 
 func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// Logging V levels
+	// 0 = Critical, 1 = Error, 2 = Warning, 3 = Info, 4 = Debug
 	log := log.FromContext(ctx)
 	log.Info("Detected change, running reconcile")
 
@@ -69,7 +70,7 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		)
 
 		if err := r.Status().Update(ctx, edagrun); err != nil {
-			log.Error(err, fmt.Sprintf("Could not update %s resource status", edagrun.Name))
+			log.Error(err, "Failed to update resource status", "resource_name", edagrun.Name)
 			return ctrl.Result{}, err
 		}
 
@@ -140,7 +141,29 @@ func (r *EDAGRunReconciler) DoEDAGFinalisation(obj client.Object, ctx context.Co
 
 func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Context) error {
 	log := log.FromContext(ctx)
-	log.Info("Creating deployment")
+
+	deployment_name := "testing"
+	deployment_namespace := "default"
+	log.Info("Creating deployment", "deployment_name", deployment_name, "namespace", deployment_namespace)
+
+	builder := builders.DeploymentBuilder{
+		Name:      deployment_name,
+		Namespace: deployment_namespace,
+		Replicas:  2,
+		Labels:    map[string]string{"app": "kickplate"},
+		Image:     "nginx:latest",
+		Port:      int32(8000),
+	}
+	deployment := builder.BuildDeployment()
+
+	if err := r.Create(ctx, deployment); err != nil {
+		log.Error(err, "Failed to create deployment",
+			"deployment_name", deployment_name,
+			"namespace", deployment_namespace,
+		)
+		return err
+	}
+
 	log.Info("Finished creating deployment")
 	return nil
 }
@@ -153,7 +176,12 @@ func (r *EDAGRunReconciler) EnsureDeploymentMatchesSpec(deployment *appsv1.Deplo
 		return nil, false
 	}
 
-	log.Info("Deployment %s has incorrect size [%s], updating size [%s]", deployment.ObjectMeta.Name, deployment.Spec.Replicas, &EDAGRun.Spec.Size)
+	log.Info(
+		"Updating deployment to correct size",
+		"resource_name", deployment.ObjectMeta.Name,
+		"actual_size", deployment.Spec.Replicas,
+		"expected_size", &EDAGRun.Spec.Size,
+	)
 	deployment.Spec.Replicas = &EDAGRun.Spec.Size
 
 	if err := r.UpdateResources(deployment, ctx); err != nil {

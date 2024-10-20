@@ -38,9 +38,65 @@ spec:
             type: object
           spec:
             properties:
-              size:
-                format: int32
-                type: integer
+              edag:
+                description: EDAG is the Schema for the edags API
+                properties:
+                  apiVersion:
+                    description: |-
+                      APIVersion defines the versioned schema of this representation of an object.
+                      Servers should convert recognized schemas to the latest internal value, and
+                      may reject unrecognized values.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+                    type: string
+                  kind:
+                    description: |-
+                      Kind is a string value representing the REST resource this object represents.
+                      Servers may infer this from the endpoint the client submits requests to.
+                      Cannot be updated.
+                      In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+                    type: string
+                  metadata:
+                    type: object
+                  spec:
+                    properties:
+                      foo:
+                        items:
+                          properties:
+                            argument:
+                              items:
+                                type: string
+                              type: array
+                            command:
+                              items:
+                                type: string
+                              type: array
+                            dependencies:
+                              items:
+                                type: string
+                              type: array
+                            envs:
+                              additionalProperties:
+                                type: string
+                              type: object
+                            image:
+                              type: string
+                            name:
+                              maxLength: 40
+                              type: string
+                            replicas:
+                              default: 1
+                              maximum: 10
+                              type: integer
+                          required:
+                          - image
+                          - name
+                          type: object
+                        type: array
+                    type: object
+                type: object
+            required:
+            - edag
             type: object
           status:
             properties:

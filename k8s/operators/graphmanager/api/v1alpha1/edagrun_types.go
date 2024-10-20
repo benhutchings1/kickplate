@@ -21,7 +21,7 @@ import (
 )
 
 type EDAGRunSpec struct {
-	Size int32 `json:"size,omitempty"`
+	Graph EDAG `json:"edag"`
 }
 
 type EDAGRunStatus struct {

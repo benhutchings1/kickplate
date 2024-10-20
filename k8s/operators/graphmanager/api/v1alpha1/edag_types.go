@@ -20,34 +20,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// EDAGSpec defines the desired state of EDAG
 type EDAGSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of EDAG. Edit edag_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Steps []EDAGStep `json:"foo,omitempty"`
 }
 
-// EDAGStatus defines the observed state of EDAG
-type EDAGStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+type EDAGStep struct {
+	// +kubebuilder:validation:MaxLength=40
+	Name  string `json:"name"`
+	Image string `json:"image"`
+	// +kubebuilder:default=1
+	// +kubebuilder:validation:Maximum=10
+	Replicas     int               `json:"replicas,omitempty"`
+	Dependencies []string          `json:"dependencies,omitempty"`
+	Envs         map[string]string `json:"envs,omitempty"`
+	Args         []string          `json:"argument,omitempty"`
+	Command      []string          `json:"command,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-
+// +kubebuilder:object:root=true
 // EDAG is the Schema for the edags API
 type EDAG struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EDAGSpec   `json:"spec,omitempty"`
-	Status EDAGStatus `json:"status,omitempty"`
+	Spec EDAGSpec `json:"spec,omitempty"`
 }
 
 //+kubebuilder:object:root=true

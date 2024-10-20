@@ -14,11 +14,10 @@ import (
 func (r *EDAGRunReconciler) FetchResource(ctx context.Context, key types.NamespacedName, obj client.Object) error {
 	log := log.FromContext(ctx)
 	log.Info(fmt.Sprintf("Fetching %s resource", obj.GetName()))
-
 	err := r.Get(ctx, key, obj)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Error(err, "Could not fetch resource", "resource", key)
+			log.Error(err, "Could not fetch resource", "key", key, "object_name", obj.GetName())
 			return err
 		}
 		return err

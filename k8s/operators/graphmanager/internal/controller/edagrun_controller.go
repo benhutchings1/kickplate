@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -101,9 +102,10 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	childDeployments := &appsv1.Deployment{}
-	if err := r.FetchResource(ctx, req.NamespacedName, childDeployments); err != nil {
+	deploymentNamespacedName := types.NamespacedName{Name: "testing", Namespace: "default"}
+	if err := r.FetchResource(ctx, deploymentNamespacedName, childDeployments); err != nil {
 		log.Info("Could not fetch deployment, creating new deployment")
-		if err := r.CreateDeployment(childDeployments, ctx); err != nil {
+		if err := r.CreateDeployment(childDeployments, ctx, *edagrun); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
@@ -120,6 +122,7 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *EDAGRunReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&graphv1alpha1.EDAGRun{}).
+		Owns(&appsv1.Deployment{}).
 		Complete(r)
 }
 
@@ -139,7 +142,7 @@ func (r *EDAGRunReconciler) DoEDAGFinalisation(obj client.Object, ctx context.Co
 	return nil, false
 }
 
-func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Context) error {
+func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Context, EDAGRun graphv1alpha1.EDAGRun) error {
 	log := log.FromContext(ctx)
 
 	deployment_name := "testing"
@@ -149,7 +152,7 @@ func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Cont
 	builder := builders.DeploymentBuilder{
 		Name:      deployment_name,
 		Namespace: deployment_namespace,
-		Replicas:  2,
+		Replicas:  EDAGRun.Spec.Size,
 		Labels:    map[string]string{"app": "kickplate"},
 		Image:     "nginx:latest",
 		Port:      int32(8000),
@@ -164,6 +167,10 @@ func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Cont
 		return err
 	}
 
+	if err := ctrl.SetControllerReference(&EDAGRun, deployment, r.Scheme); err != nil {
+		return err
+	}
+
 	log.Info("Finished creating deployment")
 	return nil
 }
@@ -171,7 +178,7 @@ func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Cont
 func (r *EDAGRunReconciler) EnsureDeploymentMatchesSpec(deployment *appsv1.Deployment, EDAGRun *graphv1alpha1.EDAGRun, ctx context.Context) (error, bool) {
 	log := log.FromContext(ctx)
 
-	if deployment.Spec.Replicas == &EDAGRun.Spec.Size {
+	if *deployment.Spec.Replicas == EDAGRun.Spec.Size {
 		log.Info("Deployment matches state")
 		return nil, false
 	}
@@ -179,7 +186,7 @@ func (r *EDAGRunReconciler) EnsureDeploymentMatchesSpec(deployment *appsv1.Deplo
 	log.Info(
 		"Updating deployment to correct size",
 		"resource_name", deployment.ObjectMeta.Name,
-		"actual_size", deployment.Spec.Replicas,
+		"actual_size", *deployment.Spec.Replicas,
 		"expected_size", &EDAGRun.Spec.Size,
 	)
 	deployment.Spec.Replicas = &EDAGRun.Spec.Size

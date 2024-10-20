@@ -20,4 +20,12 @@ resources:
   kind: EDAGRun
   path: github.com/benhutchings1/kickplate/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: kickplate.com
+  group: edag
+  kind: EDAG
+  path: github.com/benhutchings1/kickplate/api/v1alpha1
+  version: v1alpha1
 version: "3"

@@ -1,0 +1,23 @@
+# permissions for end users to view edags.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: graphmanager
+    app.kubernetes.io/managed-by: kustomize
+  name: edag-viewer-role
+rules:
+- apiGroups:
+  - edag.kickplate.com
+  resources:
+  - edags
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - edag.kickplate.com
+  resources:
+  - edags/status
+  verbs:
+  - get

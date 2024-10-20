@@ -1,4 +1,5 @@
 ## Append samples of your project ##
 resources:
 - edag_v1alpha1_edagrun.yaml
+- edag_v1alpha1_edag.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

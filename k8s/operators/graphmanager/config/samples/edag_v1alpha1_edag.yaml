@@ -1,0 +1,9 @@
+apiVersion: edag.kickplate.com/v1alpha1
+kind: EDAG
+metadata:
+  labels:
+    app.kubernetes.io/name: graphmanager
+    app.kubernetes.io/managed-by: kustomize
+  name: edag-sample
+spec:
+  # TODO(user): Add fields here

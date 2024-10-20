@@ -21,7 +21,7 @@ import (
 )
 
 type EDAGSpec struct {
-	Steps []EDAGStep `json:"foo,omitempty"`
+	Steps []EDAGStep `json:"steps,omitempty"`
 }
 
 type EDAGStep struct {

@@ -60,7 +60,7 @@ spec:
                     type: object
                   spec:
                     properties:
-                      foo:
+                      steps:
                         items:
                           properties:
                             argument:

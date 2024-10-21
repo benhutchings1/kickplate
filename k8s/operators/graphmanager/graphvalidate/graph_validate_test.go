@@ -39,3 +39,16 @@ func TestShouldRaiseErrorOnGraphWithMissingEdge(t *testing.T) {
 		t.Errorf("should have raised an error on invalid graph with missing edges")
 	}
 }
+
+func TestShouldAllowManyDisjointValidGraph(t *testing.T) {
+	sampleCyclicalGraph := map[string][]string{
+		"a": {"b"},
+		"b": {},
+		"c": {"b"},
+		"d": {"b"},
+		"e": {"b"},
+	}
+	if err := ValidateGraph(sampleCyclicalGraph); err != nil {
+		t.Errorf("Raised error on valid graph")
+	}
+}

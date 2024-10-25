@@ -4,20 +4,27 @@ import (
 	"context"
 	"fmt"
 
+	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *EDAGRunReconciler) FetchResource(ctx context.Context, key types.NamespacedName, obj client.Object) error {
+func (r *EDAGRunReconciler) FetchResource(ctx context.Context, key types.NamespacedName, obj client.Object, logError bool) error {
 	log := log.FromContext(ctx)
 	log.Info(fmt.Sprintf("Fetching %s resource", obj.GetName()))
 	err := r.Get(ctx, key, obj)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Error(err, "Could not fetch resource", "key", key, "object_name", obj.GetName())
+			if logError {
+				log.Error(err, "Could not fetch resource", "key", key, "name", key.Name)
+			} else {
+				log.Info("Could not fetch resource", "key", key, "name", key.Name)
+			}
 			return err
 		}
 		return err
@@ -71,4 +78,22 @@ func (r *EDAGRunReconciler) UpdateResources(obj client.Object, ctx context.Conte
 		return err
 	}
 	return nil
+}
+
+func (r *EDAGRunReconciler) UpdateStatus(
+	ctx context.Context, edagrun *graphv1alpha1.EDAGRun, newCondition metav1.Condition,
+) error {
+	log := log.FromContext(ctx)
+
+	meta.SetStatusCondition(
+		&edagrun.Status.Conditions,
+		newCondition,
+	)
+
+	if err := r.Status().Update(ctx, edagrun); err != nil {
+		log.Error(err, "Failed to update resource status", "resource_name", edagrun.Name)
+		return err
+	}
+	return nil
+
 }

@@ -34,7 +34,7 @@ rules:
 - apiGroups:
   - graph.kickplate.com
   resources:
-  - executiongraphruns
+  - EDAGRuns
   verbs:
   - create
   - delete
@@ -46,14 +46,26 @@ rules:
 - apiGroups:
   - graph.kickplate.com
   resources:
-  - executiongraphruns/finalizers
+  - EDAGRuns/finalizers
   verbs:
   - update
 - apiGroups:
   - graph.kickplate.com
   resources:
-  - executiongraphruns/status
+  - EDAGRuns/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - graph.kickplate.com
+  resources:
+  - executiongraphruns
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

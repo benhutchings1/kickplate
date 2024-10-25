@@ -6,4 +6,4 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: edagrun-sample
 spec:
-  size: 3
+    edagname: edag-sample

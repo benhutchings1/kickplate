@@ -64,6 +64,7 @@ spec:
                       type: string
                     replicas:
                       default: 1
+                      format: int32
                       maximum: 10
                       type: integer
                   required:

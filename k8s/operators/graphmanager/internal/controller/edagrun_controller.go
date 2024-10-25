@@ -18,19 +18,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
-	"github.com/benhutchings1/kickplate/builders"
 )
 
 // EDAGRunReconciler reconciles a ExecutionGraphRun object
@@ -39,12 +37,13 @@ type EDAGRunReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns/finalizers,verbs=update
+//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+//+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
 
 func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// Logging V levels
@@ -52,68 +51,58 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := log.FromContext(ctx)
 	log.Info("Detected change, running reconcile")
 
+	config, err := LoadConfig()
+	if err != nil {
+		panic("Failed to load config")
+	}
+
 	edagrun := &graphv1alpha1.EDAGRun{}
-	if err := r.FetchResource(ctx, req.NamespacedName, edagrun); err != nil {
+	if err := r.FetchResource(ctx, req.NamespacedName, edagrun, true); err != nil {
 		log.Info("Aborting reconcile, assuming EDAGRun has been deleted")
 		return ctrl.Result{}, nil
 	}
-
-	if edagrun.Status.Conditions == nil || len(edagrun.Status.Conditions) == 0 {
-		log.Info("Setting status condition to Initialising")
-		meta.SetStatusCondition(
-			&edagrun.Status.Conditions,
-			metav1.Condition{
-				Type:    EDAGUnknown,
-				Status:  metav1.ConditionUnknown,
-				Reason:  "Initialising",
-				Message: "Initialising EDAGRun deployment",
-			},
-		)
-
-		if err := r.Status().Update(ctx, edagrun); err != nil {
-			log.Error(err, "Failed to update resource status", "resource_name", edagrun.Name)
-			return ctrl.Result{}, err
-		}
-
-		log.Info("Finished updating status condition")
-
-		// refetch to avoid 'resource is busy' error
-		if err := r.FetchResource(ctx, req.NamespacedName, edagrun); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	if !controllerutil.ContainsFinalizer(edagrun, edagFinalizer) {
-		if err, requeue := r.AddFinalizer(edagrun, edagFinalizer, ctx); err != nil {
-			return ctrl.Result{}, err
-		} else if requeue {
-			log.Info("Requeuing")
-			return ctrl.Result{Requeue: true}, nil
-		}
-		log.Info("Finished making finalizer")
-	}
-
-	if edagrun.GetDeletionTimestamp() != nil {
-		if err, requeue := r.DoEDAGFinalisation(edagrun, ctx); err != nil {
-			return ctrl.Result{}, err
-		} else if requeue {
-			return ctrl.Result{Requeue: true}, nil
-		}
-	}
-
-	childDeployments := &appsv1.Deployment{}
-	deploymentNamespacedName := types.NamespacedName{Name: "testing", Namespace: "default"}
-	if err := r.FetchResource(ctx, deploymentNamespacedName, childDeployments); err != nil {
-		log.Info("Could not fetch deployment, creating new deployment")
-		if err := r.CreateDeployment(childDeployments, ctx, *edagrun); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
-
-	if err, requeue := r.EnsureDeploymentMatchesSpec(childDeployments, edagrun, ctx); err != nil {
+	jobDetail, err := r.UpdateJobStatus(ctx, edagrun, config.Namespace)
+	if err != nil {
 		return ctrl.Result{}, err
-	} else if requeue {
-		return ctrl.Result{Requeue: true}, nil
+	}
+	for v, _ := range jobDetail {
+		log.Info(v)
+	}
+
+	edag := &graphv1alpha1.EDAG{}
+	edagName := types.NamespacedName{
+		Namespace: config.Namespace,
+		Name:      edagrun.Spec.EDAGName,
+	}
+	if err := r.FetchResource(ctx, edagName, edag, true); err != nil {
+		log.Error(err, "EDAG cannot be retrieved", "namespace", edagName.Namespace, "name", edagName.Name)
+		return ctrl.Result{}, nil
+	}
+
+	status := edagrun.Status.Conditions
+
+	if status == nil || len(status) == 0 {
+		if err := r.InitialiseEDAGRun(ctx, edagrun, edag); err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
+	switch {
+
+	default:
+		for _, condition := range status {
+			log.Info(fmt.Sprintf("%v", condition))
+		}
+	}
+
+	job := &batchv1.Job{}
+	jobName := types.NamespacedName{Name: "testing", Namespace: "default"}
+
+	if err := r.FetchResource(ctx, jobName, job, false); err != nil {
+		if err := r.CreateJob(ctx, edag.Spec.Steps[0], jobName); err != nil {
+			return ctrl.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
@@ -124,76 +113,4 @@ func (r *EDAGRunReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&graphv1alpha1.EDAGRun{}).
 		Owns(&appsv1.Deployment{}).
 		Complete(r)
-}
-
-func (r *EDAGRunReconciler) DoEDAGFinalisation(obj client.Object, ctx context.Context) (error, bool) {
-	log := log.FromContext(ctx)
-
-	log.Info("Removing Finaliser")
-	if do_requeue := r.RemoveFinalizer(obj, edagFinalizer, ctx); do_requeue {
-		return nil, true
-	}
-
-	if err := r.UpdateResources(obj, ctx); err != nil {
-		return err, false
-	}
-	log.Info("Finished removing finaliser")
-
-	return nil, false
-}
-
-func (r *EDAGRunReconciler) CreateDeployment(obj client.Object, ctx context.Context, EDAGRun graphv1alpha1.EDAGRun) error {
-	log := log.FromContext(ctx)
-
-	deployment_name := "testing"
-	deployment_namespace := "default"
-	log.Info("Creating deployment", "deployment_name", deployment_name, "namespace", deployment_namespace)
-
-	builder := builders.DeploymentBuilder{
-		Name:      deployment_name,
-		Namespace: deployment_namespace,
-		Replicas:  EDAGRun.Spec.Size,
-		Labels:    map[string]string{"app": "kickplate"},
-		Image:     "nginx:latest",
-		Port:      int32(8000),
-	}
-	deployment := builder.BuildDeployment()
-
-	if err := r.Create(ctx, deployment); err != nil {
-		log.Error(err, "Failed to create deployment",
-			"deployment_name", deployment_name,
-			"namespace", deployment_namespace,
-		)
-		return err
-	}
-
-	if err := ctrl.SetControllerReference(&EDAGRun, deployment, r.Scheme); err != nil {
-		return err
-	}
-
-	log.Info("Finished creating deployment")
-	return nil
-}
-
-func (r *EDAGRunReconciler) EnsureDeploymentMatchesSpec(deployment *appsv1.Deployment, EDAGRun *graphv1alpha1.EDAGRun, ctx context.Context) (error, bool) {
-	log := log.FromContext(ctx)
-
-	if *deployment.Spec.Replicas == EDAGRun.Spec.Size {
-		log.Info("Deployment matches state")
-		return nil, false
-	}
-
-	log.Info(
-		"Updating deployment to correct size",
-		"resource_name", deployment.ObjectMeta.Name,
-		"actual_size", *deployment.Spec.Replicas,
-		"expected_size", &EDAGRun.Spec.Size,
-	)
-	deployment.Spec.Replicas = &EDAGRun.Spec.Size
-
-	if err := r.UpdateResources(deployment, ctx); err != nil {
-		return err, false
-	}
-
-	return nil, true
 }

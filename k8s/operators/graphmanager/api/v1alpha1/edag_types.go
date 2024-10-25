@@ -30,7 +30,7 @@ type EDAGStep struct {
 	Image string `json:"image"`
 	// +kubebuilder:default=1
 	// +kubebuilder:validation:Maximum=10
-	Replicas     int               `json:"replicas,omitempty"`
+	Replicas     int32             `json:"replicas,omitempty"`
 	Dependencies []string          `json:"dependencies,omitempty"`
 	Envs         map[string]string `json:"envs,omitempty"`
 	Args         []string          `json:"argument,omitempty"`

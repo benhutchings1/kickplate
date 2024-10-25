@@ -6,4 +6,8 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: edag-sample
 spec:
-  # TODO(user): Add fields here
+  steps:
+    - name: step1
+      image: ubuntu:latest
+      replicas: 3
+      argument: ["sleep", "30"]

@@ -1,11 +1,8 @@
 package controller
 
-const (
-	EDAGUnknown   = "Unknown"
-	EDAGAvailable = "Available"
-	EDAGDegraded  = "Degraded"
-	EDAGFailed    = "Failed"
-	EDAGSuccess   = "Success"
+import (
+	batchv1 "k8s.io/api/batch/v1"
 )
 
-const edagFinalizer = "graph.kickplate.com/finalizer"
+// Initial condition of pods
+const JobInitialising batchv1.JobConditionType = "Initialising"

@@ -1,8 +1,6 @@
 package builders
 
 import (
-	"fmt"
-
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,7 +53,7 @@ func (JobInputs *JobBuilder) BuildJob() *batchv1.Job {
 							Ports: []corev1.ContainerPort{
 								{
 									ContainerPort: JobInputs.Port,
-									Name:          fmt.Sprintf("%s-Container-Port", JobInputs.Image),
+									Name:          "jobport",
 								},
 							},
 							Env: JobInputs.Envs,

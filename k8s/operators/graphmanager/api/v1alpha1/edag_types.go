@@ -21,18 +21,17 @@ import (
 )
 
 type EDAGSpec struct {
-	Steps []EDAGStep `json:"steps,omitempty"`
+	Steps map[string]EDAGStep `json:"steps"`
 }
 
 type EDAGStep struct {
 	// +kubebuilder:validation:MaxLength=40
-	Name  string `json:"name"`
 	Image string `json:"image"`
 	// +kubebuilder:default=1
 	// +kubebuilder:validation:Maximum=10
 	Replicas     int32             `json:"replicas,omitempty"`
 	Dependencies []string          `json:"dependencies,omitempty"`
-	Envs         map[string]string `json:"envs,omitempty"`
+	Envs         map[string]string `json:"envs"`
 	Args         []string          `json:"argument,omitempty"`
 	Command      []string          `json:"command,omitempty"`
 }

@@ -114,27 +114,12 @@ spec:
                   - type
                   type: object
                 type: array
-              jobdetails:
-                items:
-                  properties:
-                    jobdependencies:
-                      items:
-                        type: string
-                      type: array
-                    jobname:
-                      type: string
-                    status:
-                      type: string
-                    stepname:
-                      type: string
-                  required:
-                  - jobname
-                  - status
-                  - stepname
-                  type: object
-                type: array
+              jobs:
+                additionalProperties:
+                  type: string
+                type: object
             required:
-            - jobdetails
+            - jobs
             type: object
         type: object
     served: true

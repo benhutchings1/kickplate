@@ -18,10 +18,8 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -46,8 +44,6 @@ type EDAGRunReconciler struct {
 //+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
 
 func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	// Logging V levels
-	// 0 = Critical, 1 = Error, 2 = Warning, 3 = Info, 4 = Debug
 	log := log.FromContext(ctx)
 	log.Info("Detected change, running reconcile")
 
@@ -56,53 +52,36 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		panic("Failed to load config")
 	}
 
-	edagrun := &graphv1alpha1.EDAGRun{}
-	if err := r.FetchResource(ctx, req.NamespacedName, edagrun, true); err != nil {
+	run := &graphv1alpha1.EDAGRun{}
+	if err := r.FetchResource(ctx, req.NamespacedName, run, true); err != nil {
 		log.Info("Aborting reconcile, assuming EDAGRun has been deleted")
 		return ctrl.Result{}, nil
-	}
-	jobDetail, err := r.UpdateJobStatus(ctx, edagrun, config.Namespace)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	for v, _ := range jobDetail {
-		log.Info(v)
 	}
 
 	edag := &graphv1alpha1.EDAG{}
 	edagName := types.NamespacedName{
 		Namespace: config.Namespace,
-		Name:      edagrun.Spec.EDAGName,
+		Name:      run.Spec.EDAGName,
 	}
 	if err := r.FetchResource(ctx, edagName, edag, true); err != nil {
 		log.Error(err, "EDAG cannot be retrieved", "namespace", edagName.Namespace, "name", edagName.Name)
 		return ctrl.Result{}, nil
 	}
 
-	status := edagrun.Status.Conditions
-
-	if status == nil || len(status) == 0 {
-		if err := r.InitialiseEDAGRun(ctx, edagrun, edag); err != nil {
-			return ctrl.Result{}, err
-		}
+	if err := CheckRunOwnerReferences(); err != nil {
 		return ctrl.Result{}, nil
 	}
 
-	switch {
-
-	default:
-		for _, condition := range status {
-			log.Info(fmt.Sprintf("%v", condition))
-		}
+	if complete := IsRunComplete(run); complete {
+		log.Info("Run already complete")
+		return ctrl.Result{}, nil
 	}
 
-	job := &batchv1.Job{}
-	jobName := types.NamespacedName{Name: "testing", Namespace: "default"}
-
-	if err := r.FetchResource(ctx, jobName, job, false); err != nil {
-		if err := r.CreateJob(ctx, edag.Spec.Steps[0], jobName); err != nil {
-			return ctrl.Result{}, err
-		}
+	if isFailed, err := r.StartNewJobs(ctx, run, edag, config.Namespace, config.DefaultPortpod, config.DefaultPodLabels); err != nil {
+		return ctrl.Result{}, err
+	} else if isFailed {
+		log.Info("Run has falied")
+		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{}, nil

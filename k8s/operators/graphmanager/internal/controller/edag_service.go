@@ -11,122 +11,147 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-func (r *EDAGRunReconciler) InitialiseEDAGRun(ctx context.Context, edagrun *graphv1alpha1.EDAGRun, edag *graphv1alpha1.EDAG) error {
+func (r *EDAGRunReconciler) CreateJob(
+	ctx context.Context,
+	edag *graphv1alpha1.EDAG,
+	run *graphv1alpha1.EDAGRun,
+	stepname string,
+	stepSpec graphv1alpha1.EDAGStep,
+	namespace string,
+	podPort int32,
+	defaultLabels map[string]string,
+) error {
 	log := log.FromContext(ctx)
 
-	log.Info("Initialising edagrun", "runName", edagrun.Name)
+	jobName := fmt.Sprintf("%s-%s", edag.Name, stepname)
+	log.Info("Creating job", "jobName", jobName, "jobNamespace", namespace)
 
-	for _, step := range edag.Spec.Steps {
-		edagrun.Status.JobDetails = append(
-			edagrun.Status.JobDetails,
-			graphv1alpha1.JobDetail{
-				Stepname:        step.Name,
-				Jobname:         fmt.Sprintf("%s-%s", edagrun.Name, step.Name),
-				Status:          string(batchv1.JobSuspended),
-				JobDependencies: step.Dependencies,
-			},
+	envs := []corev1.EnvVar{}
+	for name, value := range stepSpec.Envs {
+		envs = append(envs,
+			corev1.EnvVar{Name: name, Value: value},
 		)
 	}
 
-	if err := r.UpdateStatus(
-		ctx, edagrun, metav1.Condition{
-			Type:    string(JobInitialising),
-			Status:  metav1.ConditionUnknown,
-			Reason:  "Initialising",
-			Message: "Initialising EDAGRun executions",
-		},
-	); err != nil {
-		return err
-	}
-
-	log.Info("Finished initialising")
-	return nil
-}
-
-func (r *EDAGRunReconciler) DoEDAGFinalisation(obj client.Object, ctx context.Context, finalizer string) (error, bool) {
-	log := log.FromContext(ctx)
-
-	log.Info("Removing Finaliser")
-	if do_requeue := r.RemoveFinalizer(obj, finalizer, ctx); do_requeue {
-		return nil, true
-	}
-
-	if err := r.UpdateResources(obj, ctx); err != nil {
-		return err, false
-	}
-	log.Info("Finished removing finaliser")
-
-	return nil, false
-}
-
-func (r *EDAGRunReconciler) CreateJob(ctx context.Context, stepDescription graphv1alpha1.EDAGStep, namespacedName types.NamespacedName) error {
-	log := log.FromContext(ctx)
-
-	log.Info("Creating job", "jobName", namespacedName.Name, "jobNamespace", namespacedName.Namespace)
+	labels := defaultLabels
+	labels["app"] = "kickplate"
+	labels["edag"] = edag.Name
 
 	builder := builders.JobBuilder{
-		Name:          namespacedName.Name,
-		Namespace:     namespacedName.Namespace,
-		Labels:        map[string]string{"app": "kickplate"},
-		Image:         "nginx:latest",
-		Port:          int32(8000),
-		Completions:   stepDescription.Replicas,
-		Paralellism:   stepDescription.Replicas,
+		Name:          jobName,
+		Namespace:     namespace,
+		Labels:        labels,
+		Image:         stepSpec.Image,
+		Port:          podPort,
+		Completions:   stepSpec.Replicas,
+		Paralellism:   stepSpec.Replicas,
 		Indexed:       batchv1.IndexedCompletion,
 		RestartPolicy: corev1.RestartPolicyNever,
-		Command:       stepDescription.Command,
+		Command:       stepSpec.Command,
 		UserUUID:      1000,
-		Envs: []corev1.EnvVar{
-			{Name: "APP_ENV", Value: "PROD"},
-		},
+		Envs:          envs,
 	}
 	newJob := builder.BuildJob()
 
 	if err := r.Create(ctx, newJob); err != nil {
 		log.Error(err, "Failed to create job",
-			"deployment_name", namespacedName.Name,
-			"namespace", namespacedName.Namespace,
+			"jobName", jobName,
+			"namespace", namespace,
 		)
 		return err
 	}
+
+	run.Status.Jobs[stepname] = jobName
 
 	if err := ctrl.SetControllerReference(&graphv1alpha1.EDAGRun{}, newJob, r.Scheme); err != nil {
 		return err
 	}
 
-	log.Info("Finished creating new job", "jobName", namespacedName.Name, "jobNamespace", namespacedName.Namespace)
+	log.Info("Finished creating new job", "jobName", jobName, "jobNamespace", namespace)
 	return nil
 }
 
-func (r *EDAGRunReconciler) UpdateJobStatus(ctx context.Context, edagrun *graphv1alpha1.EDAGRun, runNamespace string) (map[string]graphv1alpha1.JobDetail, error) {
-	log := log.FromContext(ctx)
-	updatedStatus := map[string]graphv1alpha1.JobDetail{}
-	newStatus := []graphv1alpha1.JobDetail{}
+func (r *EDAGRunReconciler) StartNewJobs(ctx context.Context, run *graphv1alpha1.EDAGRun, edag *graphv1alpha1.EDAG, namespace string, podPort int32, defaultLabels map[string]string) (isFailed bool, err error) {
+	jobs, err := r.fetchJobs(ctx, run, edag, namespace)
 
-	for _, jobStatus := range edagrun.Status.JobDetails {
-		job := &batchv1.Job{}
-		if err := r.FetchResource(ctx, types.NamespacedName{
-			Namespace: runNamespace,
-			Name:      jobStatus.Jobname,
-		}, job, true); err != nil {
-			log.Error(err, "Failed to get job", "jobname", jobStatus.Jobname, "namespace", runNamespace)
-			return nil, err
+	if err != nil {
+		return false, err
+	}
+
+	// Check if any failed first before starting new jobs
+	for stepname, _ := range jobs {
+		job := jobs[stepname]
+		status := getLatestJobCondition(job)
+
+		if status.Type == batchv1.JobFailed || status.Type == batchv1.JobFailureTarget {
+			return true, nil
 		}
-		conditions := job.Status.Conditions
-		jobStatus.Status = string(conditions[len(conditions)-1].Type)
-
-		updatedStatus[jobStatus.Stepname] = jobStatus
-		newStatus = append(newStatus, jobStatus)
 	}
 
-	edagrun.Status.JobDetails = newStatus
-	if err := r.UpdateResources(edagrun, ctx); err != nil {
-		return nil, err
-	}
+	for stepname, job := range jobs {
+		if job == nil || !isJobComplete(job) {
+			if checkIfDependentsAreFinished(stepname, &jobs) {
+				stepSpec := edag.Spec.Steps[stepname]
+				if err := r.CreateJob(
+					ctx, edag, run, stepname, stepSpec, namespace, podPort, defaultLabels,
+				); err != nil {
+					return false, err
+				}
+			}
+		}
 
-	return updatedStatus, nil
+	}
+	return false, nil
+}
+
+func checkIfDependentsAreFinished(stepName string, jobs *map[string]*batchv1.Job) bool {
+	return true
+}
+
+func (r *EDAGRunReconciler) fetchJobs(ctx context.Context, run *graphv1alpha1.EDAGRun, edag *graphv1alpha1.EDAG, namespace string) (map[string]*batchv1.Job, error) {
+	jobs := map[string]*batchv1.Job{}
+
+	for stepname, _ := range edag.Spec.Steps {
+		jobName, exists := run.Status.Jobs[stepname]
+
+		if exists {
+			job := batchv1.Job{}
+			if err := r.FetchResource(
+				ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job, true,
+			); err != nil {
+				return nil, err
+			}
+			jobs[stepname] = &job
+		} else {
+			jobs[stepname] = nil
+		}
+	}
+	return jobs, nil
+}
+
+func CheckRunOwnerReferences() error {
+	return nil
+}
+
+func isJobComplete(job *batchv1.Job) bool {
+	condition := getLatestJobCondition(job)
+	return condition.Type == batchv1.JobComplete || condition.Type == batchv1.JobFailed
+}
+
+func IsRunComplete(run *graphv1alpha1.EDAGRun) bool {
+	condition := getLatestRunCondition(run)
+	return condition.Type == string(RunFailed) || condition.Type == string(RunSucceeded)
+}
+
+func getLatestJobCondition(job *batchv1.Job) batchv1.JobCondition {
+	conditions := job.Status.Conditions
+	return conditions[len(conditions)-1]
+}
+
+func getLatestRunCondition(run *graphv1alpha1.EDAGRun) metav1.Condition {
+	conditions := run.Status.Conditions
+	return conditions[len(conditions)-1]
 }

@@ -26,14 +26,7 @@ type EDAGRunSpec struct {
 
 type EDAGRunStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
-	JobDetails []JobDetail        `json:"jobdetails"`
-}
-
-type JobDetail struct {
-	Stepname        string   `json:"stepname"`
-	Jobname         string   `json:"jobname"`
-	Status          string   `json:"status"`
-	JobDependencies []string `json:"jobdependencies,omitempty"`
+	Jobs       map[string]string  `json:"jobs"`
 }
 
 //+kubebuilder:object:root=true

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,20 +15,20 @@ import (
 
 func (r *EDAGRunReconciler) FetchResource(ctx context.Context, key types.NamespacedName, obj client.Object, logError bool) error {
 	log := log.FromContext(ctx)
-	log.Info(fmt.Sprintf("Fetching %s resource", obj.GetName()))
-	err := r.Get(ctx, key, obj)
-	if err != nil {
+	log.Info("Fetching %s resource", "name", key.Name)
+
+	if err := r.Get(ctx, key, obj); err != nil {
 		if apierrors.IsNotFound(err) {
 			if logError {
-				log.Error(err, "Could not fetch resource", "key", key, "name", key.Name)
+				log.Error(err, "Could not fetch resource", "name", key.Name)
 			} else {
-				log.Info("Could not fetch resource", "key", key, "name", key.Name)
+				log.Info("Could not fetch resource", "name", key.Name)
 			}
 			return err
 		}
 		return err
 	}
-	log.Info("Finished fetching resource", "resource", obj.GetName())
+	log.Info("Finished fetching resource", "name", key.Name)
 	return nil
 }
 

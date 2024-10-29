@@ -7,7 +7,11 @@ metadata:
   name: edag-sample
 spec:
   steps:
-    - name: step1
+    step1:
+      image: ubuntu:latest
+      replicas: 3
+      argument: ["sleep", "30"]
+    step2:
       image: ubuntu:latest
       replicas: 3
       argument: ["sleep", "30"]

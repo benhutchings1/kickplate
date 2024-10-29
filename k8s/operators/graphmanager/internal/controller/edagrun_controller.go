@@ -19,7 +19,7 @@ package controller
 import (
 	"context"
 
-	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -35,26 +35,33 @@ type EDAGRunReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAG,verbs=get;list
 //+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/finalizers,verbs=update
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
 //+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
 
 func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	// Higher V logging level indicates higher warning level
+	// Rough guidelines
+	// V0 - unexpected outcome/failures
+	// V1 - Creating/Updating resources
+	// V2 - Checking and other debugging information
 	log := log.FromContext(ctx)
-	log.Info("Detected change, running reconcile")
+	log.V(0).Info("Detected change, running reconcile")
 
 	config, err := LoadConfig()
 	if err != nil {
+		log.Error(err, "Failed to load config")
 		panic("Failed to load config")
 	}
 
 	run := &graphv1alpha1.EDAGRun{}
-	if err := r.FetchResource(ctx, req.NamespacedName, run, true); err != nil {
-		log.Info("Aborting reconcile, assuming EDAGRun has been deleted")
+	if err := r.FetchResource(&log, ctx, req.NamespacedName, run, true); err != nil {
+		log.V(0).Info("Aborting reconcile, assuming EDAGRun has been deleted", "name", req.Name, "namespace", req.Namespace)
 		return ctrl.Result{}, nil
 	}
 
@@ -63,24 +70,27 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		Namespace: config.Namespace,
 		Name:      run.Spec.EDAGName,
 	}
-	if err := r.FetchResource(ctx, edagName, edag, true); err != nil {
+	if err = r.FetchResource(&log, ctx, edagName, edag, true); err != nil {
 		log.Error(err, "EDAG cannot be retrieved", "namespace", edagName.Namespace, "name", edagName.Name)
 		return ctrl.Result{}, nil
 	}
 
-	if err := CheckRunOwnerReferences(); err != nil {
+	if err = r.CheckRunOwnerReference(&log, edag, run); err != nil {
+		log.Error(err, "Failed to check owner references")
 		return ctrl.Result{}, nil
 	}
 
 	if complete := IsRunComplete(run); complete {
-		log.Info("Run already complete")
+		log.V(0).Info("Run already complete")
 		return ctrl.Result{}, nil
 	}
 
-	if isFailed, err := r.StartNewJobs(ctx, run, edag, config.Namespace, config.DefaultPortpod, config.DefaultPodLabels); err != nil {
+	if isFailed, err := r.StartNewJobs(
+		&log, ctx, run, edag, config.Namespace, config.DefaultPortpod, config.DefaultPodLabels,
+	); err != nil {
 		return ctrl.Result{}, err
 	} else if isFailed {
-		log.Info("Run has falied")
+		log.V(0).Info("Detected run has falied")
 		return ctrl.Result{}, nil
 	}
 
@@ -90,6 +100,6 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *EDAGRunReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&graphv1alpha1.EDAGRun{}).
-		Owns(&appsv1.Deployment{}).
+		Owns(&batchv1.Job{}).
 		Complete(r)
 }

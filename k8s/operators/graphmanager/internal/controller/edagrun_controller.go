@@ -27,6 +27,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
+	"github.com/benhutchings1/kickplate/internal/clusterclient"
+	"github.com/benhutchings1/kickplate/internal/service"
 )
 
 // EDAGRunReconciler reconciles a ExecutionGraphRun object
@@ -35,21 +37,20 @@ type EDAGRunReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAG,verbs=get;list
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=apps,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
-//+kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
-
+// +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAG,verbs=get;list
+// +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=apps,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch
+// +kubebuilder:rbac:groups=graph.kickplate.com,resources=executiongraphruns,verbs=get;list;watch;create;update;patch;delete
 func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// Higher V logging level indicates higher warning level
 	// Rough guidelines
-	// V0 - unexpected outcome/failures
+	// V0 - Checking and other debugging information
 	// V1 - Creating/Updating resources
-	// V2 - Checking and other debugging information
+	// V2 - unexpected outcome/failures
 	log := log.FromContext(ctx)
 	log.V(0).Info("Detected change, running reconcile")
 
@@ -59,38 +60,42 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		panic("Failed to load config")
 	}
 
-	run := &graphv1alpha1.EDAGRun{}
-	if err := r.FetchResource(&log, ctx, req.NamespacedName, run, true); err != nil {
-		log.V(0).Info("Aborting reconcile, assuming EDAGRun has been deleted", "name", req.Name, "namespace", req.Namespace)
+	svc := &service.EDAGRunService{
+		Client: clusterclient.EDAGRunClient{
+			ClusterClient: r.Client,
+			Scheme:        r.Scheme,
+			Log:           &log,
+		},
+		Log: &log,
+	}
+
+	run, err := svc.FetchEDAGRun(ctx, req.NamespacedName)
+	if err != nil {
 		return ctrl.Result{}, nil
 	}
 
-	edag := &graphv1alpha1.EDAG{}
 	edagName := types.NamespacedName{
 		Namespace: config.Namespace,
 		Name:      run.Spec.EDAGName,
 	}
-	if err = r.FetchResource(&log, ctx, edagName, edag, true); err != nil {
-		log.Error(err, "EDAG cannot be retrieved", "namespace", edagName.Namespace, "name", edagName.Name)
+	edag, err := svc.FetchEDAG(ctx, edagName)
+	if err != nil {
 		return ctrl.Result{}, nil
 	}
 
-	if err = r.CheckRunOwnerReference(&log, edag, run); err != nil {
-		log.Error(err, "Failed to check owner references")
+	if err = svc.CheckRunOwnerReference(edag, run); err != nil {
 		return ctrl.Result{}, nil
 	}
 
-	if complete := IsRunComplete(run); complete {
-		log.V(0).Info("Run already complete")
+	if complete := svc.IsRunComplete(run); complete {
 		return ctrl.Result{}, nil
 	}
 
-	if isFailed, err := r.StartNewJobs(
-		&log, ctx, run, edag, config.Namespace, config.DefaultPortpod, config.DefaultPodLabels,
+	if isFailed, err := svc.StartNewJobs(
+		ctx, run, edag, config.Namespace, config.DefaultPortpod, config.DefaultPodLabels,
 	); err != nil {
 		return ctrl.Result{}, err
 	} else if isFailed {
-		log.V(0).Info("Detected run has falied")
 		return ctrl.Result{}, nil
 	}
 

@@ -1,4 +1,4 @@
-package controller
+package service
 
 import (
 	"context"
@@ -6,16 +6,20 @@ import (
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
 	"github.com/benhutchings1/kickplate/builders"
+	"github.com/benhutchings1/kickplate/internal/clusterclient"
 	"github.com/go-logr/logr"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
-func (r *EDAGRunReconciler) CreateJob(
-	log *logr.Logger,
+type EDAGRunService struct {
+	Client clusterclient.EDAGRunClient
+	Log    *logr.Logger
+}
+
+func (svc *EDAGRunService) CreateJob(
 	ctx context.Context,
 	edag *graphv1alpha1.EDAG,
 	run *graphv1alpha1.EDAGRun,
@@ -26,7 +30,7 @@ func (r *EDAGRunReconciler) CreateJob(
 	defaultLabels map[string]string,
 ) error {
 	jobName := fmt.Sprintf("%s-%s", run.Name, stepname)
-	log.V(1).Info("Creating job", "jobName", jobName, "jobNamespace", namespace)
+	svc.Log.V(1).Info("Creating job", "jobName", jobName, "jobNamespace", namespace)
 
 	envs := []corev1.EnvVar{}
 	for name, value := range stepSpec.Envs {
@@ -55,8 +59,8 @@ func (r *EDAGRunReconciler) CreateJob(
 	}
 	newJob := builder.BuildJob()
 
-	if err := r.Create(ctx, newJob); err != nil {
-		log.Error(err, "Failed to create job",
+	if err := svc.Client.CreateJob(ctx, newJob); err != nil {
+		svc.Log.Error(err, "Failed to create job",
 			"jobName", jobName,
 			"namespace", namespace,
 		)
@@ -73,19 +77,20 @@ func (r *EDAGRunReconciler) CreateJob(
 	}
 
 	run.Status.Jobs[stepname] = jobName
-	if err := r.UpdateStatus(log, ctx, run, newCondition); err != nil {
+	if err := svc.Client.UpdateStatus(ctx, run, newCondition); err != nil {
 		return err
 	}
 
-	if err := ctrl.SetControllerReference(&graphv1alpha1.EDAGRun{}, newJob, r.Scheme); err != nil {
-		return err
+	if err := svc.Client.SetControllerReference(
+		run, newJob,
+	); err != nil {
+		return nil
 	}
 
 	return nil
 }
 
-func (r *EDAGRunReconciler) StartNewJobs(
-	log *logr.Logger,
+func (svc *EDAGRunService) StartNewJobs(
 	ctx context.Context,
 	run *graphv1alpha1.EDAGRun,
 	edag *graphv1alpha1.EDAG,
@@ -93,8 +98,8 @@ func (r *EDAGRunReconciler) StartNewJobs(
 	podPort int32,
 	defaultLabels map[string]string,
 ) (isFailed bool, err error) {
-	log.V(2).Info("Checking for new jobs to start")
-	jobs, err := r.fetchJobs(log, ctx, run, edag, namespace)
+	svc.Log.V(2).Info("Checking for new jobs to start")
+	jobs, err := svc.fetchJobs(ctx, run, edag, namespace)
 
 	if err != nil {
 		return false, err
@@ -104,7 +109,7 @@ func (r *EDAGRunReconciler) StartNewJobs(
 	for stepname := range jobs {
 		job := jobs[stepname]
 		if job != nil && isJobFailed(job) {
-			log.V(0).Info("Found failed job", "job", job.Name)
+			svc.Log.V(0).Info("Found failed job", "job", job.Name)
 			return true, nil
 		}
 	}
@@ -113,8 +118,8 @@ func (r *EDAGRunReconciler) StartNewJobs(
 		if job == nil {
 			if checkIfDependentsAreFinished(stepname, &jobs, edag) {
 				stepSpec := edag.Spec.Steps[stepname]
-				if err := r.CreateJob(
-					log, ctx, edag, run, stepname, stepSpec, namespace, podPort, defaultLabels,
+				if err := svc.CreateJob(
+					ctx, edag, run, stepname, stepSpec, namespace, podPort, defaultLabels,
 				); err != nil {
 					return false, err
 				}
@@ -122,6 +127,104 @@ func (r *EDAGRunReconciler) StartNewJobs(
 		}
 	}
 	return false, nil
+}
+
+func (svc *EDAGRunService) fetchJobs(
+	ctx context.Context,
+	run *graphv1alpha1.EDAGRun,
+	edag *graphv1alpha1.EDAG,
+	namespace string,
+) (map[string]*batchv1.Job, error) {
+	jobs := map[string]*batchv1.Job{}
+
+	for stepname := range edag.Spec.Steps {
+		jobName, exists := run.Status.Jobs[stepname]
+
+		if exists {
+			job := batchv1.Job{}
+			if err := svc.Client.FetchResource(
+				ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job, true,
+			); err != nil {
+				return nil, err
+			}
+			jobs[stepname] = &job
+		} else {
+			jobs[stepname] = nil
+		}
+	}
+	return jobs, nil
+}
+
+func (svc *EDAGRunService) CheckRunOwnerReference(
+	edag *graphv1alpha1.EDAG,
+	run *graphv1alpha1.EDAGRun,
+) error {
+
+	// NOT WORKING
+	svc.Log.V(2).Info("Checking owner references", "edag", edag.Name, "edagrun", run.Name)
+	if run.OwnerReferences != nil {
+		for _, ref := range run.OwnerReferences {
+			if ref.Kind == "EDAG" && ref.Name == edag.Name {
+				svc.Log.V(2).Info(
+					"Found owner reference", "Edag Name", edag.Name, "Edagrun name", run.Name,
+				)
+				return nil
+			}
+		}
+	}
+	svc.Log.V(1).Info("Creating owner reference", "Edag Name", edag.Name, "Edagrun name", run.Name)
+	if err := svc.Client.SetControllerReference(
+		edag, run,
+	); err != nil {
+		svc.Log.Error(err, "Failed to check owner references", "Edag Name", edag.Name, "Edagrun name", run.Name)
+		return err
+	}
+	return nil
+}
+
+func (svc *EDAGRunService) IsRunComplete(run *graphv1alpha1.EDAGRun) bool {
+	conditions := run.Status.Conditions
+
+	if conditions == nil || len(conditions) == 0 {
+		return false
+	}
+
+	latestCondition := conditions[len(conditions)-1]
+	complete := latestCondition.Type == string(RunFailed) || latestCondition.Type == string(RunSucceeded)
+	if complete {
+		svc.Log.V(0).Info("Run already complete")
+	}
+	return complete
+}
+
+func (svc *EDAGRunService) FetchEDAG(
+	ctx context.Context,
+	edagNamespacedName types.NamespacedName,
+) (edag *graphv1alpha1.EDAG, err error) {
+	fetchedEdag := &graphv1alpha1.EDAG{}
+	if err := svc.Client.FetchResource(ctx, edagNamespacedName, edag, true); err != nil {
+		svc.Log.Error(
+			err, "EDAG cannot be retrieved",
+			"namespace", edagNamespacedName.Namespace, "name", edagNamespacedName.Name,
+		)
+		return nil, err
+	}
+	return fetchedEdag, nil
+}
+
+func (svc *EDAGRunService) FetchEDAGRun(
+	ctx context.Context,
+	edagRunNamespacedName types.NamespacedName,
+) (edagrun *graphv1alpha1.EDAGRun, err error) {
+	fetchedEdagrun := &graphv1alpha1.EDAGRun{}
+	if err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun, false); err != nil {
+		svc.Log.V(0).Info(
+			"Aborting reconcile, assuming EDAGRun has been deleted",
+			"name", edagRunNamespacedName.Name, "namespace", edagRunNamespacedName.Namespace,
+		)
+		return nil, err
+	}
+	return fetchedEdagrun, nil
 }
 
 func checkIfDependentsAreFinished(
@@ -141,67 +244,6 @@ func checkIfDependentsAreFinished(
 	}
 
 	return true
-}
-
-func (r *EDAGRunReconciler) fetchJobs(
-	log *logr.Logger,
-	ctx context.Context,
-	run *graphv1alpha1.EDAGRun,
-	edag *graphv1alpha1.EDAG,
-	namespace string,
-) (map[string]*batchv1.Job, error) {
-	jobs := map[string]*batchv1.Job{}
-
-	for stepname := range edag.Spec.Steps {
-		jobName, exists := run.Status.Jobs[stepname]
-
-		if exists {
-			job := batchv1.Job{}
-			if err := r.FetchResource(
-				log, ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job, true,
-			); err != nil {
-				return nil, err
-			}
-			jobs[stepname] = &job
-		} else {
-			jobs[stepname] = nil
-		}
-	}
-	return jobs, nil
-}
-
-func (r *EDAGRunReconciler) CheckRunOwnerReference(
-	log *logr.Logger,
-	edag *graphv1alpha1.EDAG,
-	run *graphv1alpha1.EDAGRun,
-) error {
-
-	// NOT WORKING
-	log.V(2).Info("Checking owner references", "edag", edag.Name, "edagrun", run.Name)
-	if run.OwnerReferences != nil {
-		for _, ref := range run.OwnerReferences {
-			if ref.Kind == "EDAG" && ref.Name == edag.Name {
-				log.V(2).Info("Found owner reference")
-				return nil
-			}
-		}
-	}
-	log.V(1).Info("Creating owner reference")
-	if err := ctrl.SetControllerReference(edag, run, r.Scheme); err != nil {
-		return err
-	}
-	return nil
-}
-
-func IsRunComplete(run *graphv1alpha1.EDAGRun) bool {
-	conditions := run.Status.Conditions
-
-	if conditions == nil || len(conditions) == 0 {
-		return false
-	}
-
-	latestCondition := conditions[len(conditions)-1]
-	return latestCondition.Type == string(RunFailed) || latestCondition.Type == string(RunSucceeded)
 }
 
 func isJobFailed(job *batchv1.Job) (failed bool) {

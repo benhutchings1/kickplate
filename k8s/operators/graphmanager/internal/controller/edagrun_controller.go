@@ -83,7 +83,7 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	if err = svc.CheckRunOwnerReference(edag, run); err != nil {
+	if err = svc.CheckRunOwnerReference(ctx, edag, run); err != nil {
 		return ctrl.Result{}, nil
 	}
 

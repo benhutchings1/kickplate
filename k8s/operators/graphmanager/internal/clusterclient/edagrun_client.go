@@ -71,7 +71,6 @@ func (client *EDAGRunClient) UpdateStatus(
 		return err
 	}
 	return nil
-
 }
 
 func (client *EDAGRunClient) CreateJob(ctx context.Context, obj client.Object) error {
@@ -79,6 +78,7 @@ func (client *EDAGRunClient) CreateJob(ctx context.Context, obj client.Object) e
 }
 
 func (client *EDAGRunClient) SetControllerReference(
+	ctx context.Context,
 	parentObj client.Object,
 	childObj client.Object,
 ) error {
@@ -87,6 +87,9 @@ func (client *EDAGRunClient) SetControllerReference(
 			err, "Failed to set controller reference",
 			"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),
 		)
+	}
+	if err := client.UpdateResources(ctx, parentObj); err != nil {
+		return err
 	}
 	return nil
 }

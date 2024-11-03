@@ -82,7 +82,7 @@ func (svc *EDAGRunService) CreateJob(
 	}
 
 	if err := svc.Client.SetControllerReference(
-		run, newJob,
+		ctx, run, newJob,
 	); err != nil {
 		return nil
 	}
@@ -156,6 +156,7 @@ func (svc *EDAGRunService) fetchJobs(
 }
 
 func (svc *EDAGRunService) CheckRunOwnerReference(
+	ctx context.Context,
 	edag *graphv1alpha1.EDAG,
 	run *graphv1alpha1.EDAGRun,
 ) error {
@@ -174,7 +175,7 @@ func (svc *EDAGRunService) CheckRunOwnerReference(
 	}
 	svc.Log.V(1).Info("Creating owner reference", "Edag Name", edag.Name, "Edagrun name", run.Name)
 	if err := svc.Client.SetControllerReference(
-		edag, run,
+		ctx, edag, run,
 	); err != nil {
 		svc.Log.Error(err, "Failed to check owner references", "Edag Name", edag.Name, "Edagrun name", run.Name)
 		return err

@@ -142,10 +142,13 @@ func (svc *EDAGRunService) fetchJobs(
 
 		if exists {
 			job := batchv1.Job{}
-			if err := svc.Client.FetchResource(
-				ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job, true,
+			if found, err := svc.Client.FetchResource(
+				ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job,
 			); err != nil {
+				svc.Client.Log.Error(err, "Could not fetch resource", "name", jobName)
 				return nil, err
+			} else if !found {
+				svc.Client.Log.V(1).Info("Could not fetch resource", "name", jobName)
 			}
 			jobs[stepname] = &job
 		} else {
@@ -203,7 +206,7 @@ func (svc *EDAGRunService) FetchEDAG(
 	edagNamespacedName types.NamespacedName,
 ) (edag *graphv1alpha1.EDAG, err error) {
 	fetchedEdag := &graphv1alpha1.EDAG{}
-	if err := svc.Client.FetchResource(ctx, edagNamespacedName, edag, true); err != nil {
+	if found, err := svc.Client.FetchResource(ctx, edagNamespacedName, edag); err != nil || !found {
 		svc.Log.Error(
 			err, "EDAG cannot be retrieved",
 			"namespace", edagNamespacedName.Namespace, "name", edagNamespacedName.Name,
@@ -218,7 +221,7 @@ func (svc *EDAGRunService) FetchEDAGRun(
 	edagRunNamespacedName types.NamespacedName,
 ) (edagrun *graphv1alpha1.EDAGRun, err error) {
 	fetchedEdagrun := &graphv1alpha1.EDAGRun{}
-	if err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun, false); err != nil {
+	if found, err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun); err != nil || !found {
 		svc.Log.V(0).Info(
 			"Aborting reconcile, assuming EDAGRun has been deleted",
 			"name", edagRunNamespacedName.Name, "namespace", edagRunNamespacedName.Namespace,

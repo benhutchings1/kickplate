@@ -14,33 +14,28 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+var IsNotFoundFn = apierrors.IsNotFound
+
 type EDAGRunClient struct {
-	ClusterClient client.Client
-	Scheme        *runtime.Scheme
-	Log           *logr.Logger
+	K8sClient client.Client
+	Scheme    *runtime.Scheme
+	Log       *logr.Logger
 }
 
 func (client *EDAGRunClient) FetchResource(
 	ctx context.Context,
 	key types.NamespacedName,
 	obj client.Object,
-	LogError bool,
-) error {
+) (isfound bool, err error) {
 	client.Log.V(2).Info("Fetching resource", "name", key.Name)
-
-	if err := client.ClusterClient.Get(ctx, key, obj); err != nil {
-		if apierrors.IsNotFound(err) {
-			if LogError {
-				client.Log.Error(err, "Could not fetch resource", "name", key.Name)
-			} else {
-				client.Log.V(1).Info("Could not fetch resource", "name", key.Name)
-			}
-			return err
+	if err := client.K8sClient.Get(ctx, key, obj); err != nil {
+		if IsNotFoundFn(err) {
+			return false, err
+		} else {
+			return false, nil
 		}
-		return err
 	}
-
-	return nil
+	return true, nil
 }
 
 func (client *EDAGRunClient) UpdateResources(
@@ -48,7 +43,7 @@ func (client *EDAGRunClient) UpdateResources(
 	obj client.Object,
 ) error {
 	client.Log.V(1).Info("Updating resource", "resource", obj.GetName())
-	if err := client.ClusterClient.Update(ctx, obj); err != nil {
+	if err := client.K8sClient.Update(ctx, obj); err != nil {
 		client.Log.Error(err, "Failed to update resource", "resource", obj.GetName())
 		return err
 	}
@@ -66,7 +61,9 @@ func (client *EDAGRunClient) UpdateStatus(
 		newCondition,
 	)
 
-	if err := client.ClusterClient.Status().Update(ctx, run); err != nil {
+	status := client.K8sClient.Status()
+
+	if err := status.Update(ctx, run); err != nil {
 		client.Log.Error(err, "Failed to update resource status", "resource_name", run.Name)
 		return err
 	}
@@ -74,7 +71,7 @@ func (client *EDAGRunClient) UpdateStatus(
 }
 
 func (client *EDAGRunClient) CreateJob(ctx context.Context, obj client.Object) error {
-	return client.ClusterClient.Create(ctx, obj)
+	return client.K8sClient.Create(ctx, obj)
 }
 
 func (client *EDAGRunClient) SetControllerReference(

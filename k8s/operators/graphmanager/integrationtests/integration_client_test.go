@@ -16,34 +16,38 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var clusterclient client.EDAGRunClient
+var clusterclient client.ClientImp
 
 var _ = Describe("EDAGRun Cluster Client", func() {
 	ctx := context.Background()
 
 	BeforeEach(func() {
 		By("instansiating cluster client")
-		clusterclient = client.EDAGRunClient{
-			ClusterClient: k8sClient,
-			Scheme:        scheme.Scheme,
-			Log:           &logf.Log,
+		clusterclient = client.ClientImp{
+			K8sClient: k8sClient,
+			Scheme:    scheme.Scheme,
+			Log:       &logf.Log,
 		}
 	})
 
 	Context("when fetching a resource", func() {
 		It("should fetch existing EDAGRun", func() {
 			fetchedRun := &graphv1alpha1.EDAGRun{}
-			Expect(clusterclient.FetchResource(ctx, types.NamespacedName{
+			err, found := clusterclient.FetchResource(ctx, types.NamespacedName{
 				Name:      "sampleedagrun",
 				Namespace: SampleDefaultInputs.Namespace,
-			}, fetchedRun, true)).To(Succeed())
+			}, fetchedRun)
+			Expect(err).To(Succeed())
+			Expect(found).To(BeTrue())
 		})
 		It("should return error on existing kind but not found instance", func() {
 			fetchedEdag := &graphv1alpha1.EDAG{}
-			Expect(clusterclient.FetchResource(ctx, types.NamespacedName{
+			err, found := clusterclient.FetchResource(ctx, types.NamespacedName{
 				Name:      "somerandomthing",
 				Namespace: SampleDefaultInputs.Namespace,
-			}, fetchedEdag, true)).To(HaveOccurred())
+			}, fetchedEdag)
+			Expect(err).To(HaveOccurred())
+			Expect(found).To(BeFalse())
 		})
 	})
 	Context("when updating a resource", func() {

@@ -60,13 +60,15 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		panic("Failed to load config")
 	}
 
+	client := clusterclient.ClientImp{
+		K8sClient: r.Client,
+		Scheme:    r.Scheme,
+		Log:       &log,
+	}
+
 	svc := &service.EDAGRunService{
-		Client: clusterclient.EDAGRunClient{
-			ClusterClient: r.Client,
-			Scheme:        r.Scheme,
-			Log:           &log,
-		},
-		Log: &log,
+		Client: &client,
+		Log:    &log,
 	}
 
 	run, err := svc.FetchEDAGRun(ctx, req.NamespacedName)

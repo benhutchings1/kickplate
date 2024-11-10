@@ -1,62 +1,215 @@
 package clusterclient_test
 
-// import (
-// 	"context"
-// 	"testing"
+import (
+	"context"
+	"errors"
+	"testing"
 
-// 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
-// 	batchv1 "k8s.io/api/batch/v1"
-// 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-// 	"k8s.io/apimachinery/pkg/types"
-// 	"sigs.k8s.io/controller-runtime/pkg/client"
-// )
+	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
+	"github.com/benhutchings1/kickplate/internal/clusterclient"
+	"github.com/go-logr/logr"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+)
 
-// type MockEDAGRunClient struct {
-// 	MockCreateJob     func(ctx context.Context, job *batchv1.Job) error
-// 	MockFetchResource func(
-// 		ctx context.Context,
-// 		key types.NamespacedName,
-// 		obj client.Object,
-// 		LogError bool,
-// 	) error
-// 	MockUpdateResource func(
-// 		ctx context.Context,
-// 		obj client.Object,
-// 	) error
-// 	MockUpdateStatus func(
-// 		ctx context.Context,
-// 		run *graphv1alpha1.EDAGRun,
-// 		newCondition metav1.Condition,
-// 	) error
-// 	MockSetControllerReference func(
-// 		parentObj client.Object,
-// 		childObj client.Object,
-// 	) error
-// }
+func TestFetchResource(t *testing.T) {
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
 
-// func TestCreateJob(t *testing.T) {
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	key := types.NamespacedName{
+		Name:      "testname",
+		Namespace: "testnamespace",
+	}
+	obj := graphv1alpha1.EDAG{}
 
-// }
+	mockK8sClient.On("Get", context.TODO(), key, &obj, mock.Anything).Return(
+		nil,
+	).Times(1)
 
-// func TestStartNewJobs(t *testing.T) {
+	found, err := client.FetchResource(context.TODO(), key, &obj)
 
-// }
+	assert.NoError(t, err)
+	assert.True(t, found)
+}
 
-// func TestCheckRunOwnerReference(t *testing.T) {
+func TestFetchResourceFailedNotFoundShouldReturnError(t *testing.T) {
+	err := errors.New("Object not found")
 
-// }
+	clusterclient.IsNotFoundFn = func(passedErr error) bool {
+		assert.Equal(t, passedErr, err)
+		return false
+	}
 
-// func TestIsRunComplete(t *testing.T) {
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
 
-// }
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	key := types.NamespacedName{
+		Name:      "testname",
+		Namespace: "testnamespace",
+	}
+	obj := graphv1alpha1.EDAG{}
 
-// func TestFetchEDAG(t *testing.T) {
+	mockK8sClient.On("Get", context.TODO(), key, &obj, mock.Anything).Return(
+		err,
+	)
 
-// }
-// func TestFetchEDAGRun(t *testing.T) {
+	found, rtnErr := client.FetchResource(context.TODO(), key, &obj)
 
-// }
+	assert.NoError(t, rtnErr)
+	assert.False(t, found)
+}
 
-// func TestIsJobComplete(t *testing.T) {
+func TestFetchResourceFailedFoundShouldReturnError(t *testing.T) {
+	err := errors.New("Object was found with an error")
 
-// }
+	clusterclient.IsNotFoundFn = func(passedErr error) bool {
+		assert.Equal(t, passedErr, err)
+		return true
+	}
+
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	key := types.NamespacedName{
+		Name:      "testname",
+		Namespace: "testnamespace",
+	}
+	obj := graphv1alpha1.EDAG{}
+
+	mockK8sClient.On("Get", context.TODO(), key, &obj, mock.Anything).Return(
+		err,
+	)
+
+	found, rtnErr := client.FetchResource(context.TODO(), key, &obj)
+
+	assert.Error(t, rtnErr)
+	assert.False(t, found)
+}
+
+func TestUpdateResource(t *testing.T) {
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+
+	obj := graphv1alpha1.EDAG{}
+
+	mockK8sClient.On("Update", context.TODO(), &obj).Return(
+		nil,
+	).Times(1)
+	rtnErr := client.UpdateResources(context.TODO(), &obj)
+
+	assert.NoError(t, rtnErr)
+}
+
+func TestUpdateResourceShouldReturnError(t *testing.T) {
+	err := errors.New("Failure to update")
+
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	obj := graphv1alpha1.EDAG{}
+
+	mockK8sClient.On("Update", context.TODO(), &obj).Return(
+		err,
+	).Times(1)
+	rtnErr := client.UpdateResources(context.TODO(), &obj)
+
+	assert.Error(t, rtnErr)
+}
+
+func TestUpdateStatus(t *testing.T) {
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	obj := graphv1alpha1.EDAGRun{}
+	obj.Name = "TestName"
+	obj.Status.Conditions = []metav1.Condition{}
+
+	newCondition := metav1.Condition{
+		Type: "Unsafe", Status: metav1.ConditionFalse,
+	}
+
+	mockedSubResourceWriter := MockSubResourceWriter{}
+
+	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
+	mockedSubResourceWriter.On("Update", context.TODO(), &obj).Return(
+		nil,
+	).Times(1)
+
+	rtnErr := client.UpdateStatus(context.TODO(), &obj, newCondition)
+
+	assert.NoError(t, rtnErr)
+}
+
+func TestUpdateStatusShouldReturnError(t *testing.T) {
+	err := errors.New("Failure to update")
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.EDAGRunClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	obj := graphv1alpha1.EDAGRun{}
+	obj.Name = "TestName"
+	obj.Status.Conditions = []metav1.Condition{}
+
+	newCondition := metav1.Condition{
+		Type: "Unsafe", Status: metav1.ConditionFalse,
+	}
+
+	mockedSubResourceWriter := MockSubResourceWriter{}
+
+	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
+	mockedSubResourceWriter.On("Update", context.TODO(), &obj).Return(
+		err,
+	).Times(1)
+
+	rtnErr := client.UpdateStatus(context.TODO(), &obj, newCondition)
+
+	assert.Error(t, rtnErr, err)
+}
+
+func TestSetControllerReference(t *testing.T) {
+	t.Error("Not implemented properly")
+}

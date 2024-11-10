@@ -15,7 +15,7 @@ import (
 )
 
 type EDAGRunService struct {
-	Client clusterclient.ClusterClient
+	Client clusterclient.ClusterClientManager
 	Log    *logr.Logger
 }
 
@@ -145,10 +145,10 @@ func (svc *EDAGRunService) fetchJobs(
 			if found, err := svc.Client.FetchResource(
 				ctx, types.NamespacedName{Name: jobName, Namespace: namespace}, &job,
 			); err != nil {
-				svc.Client.Log.Error(err, "Could not fetch resource", "name", jobName)
+				svc.Log.Error(err, "Could not fetch resource", "name", jobName)
 				return nil, err
 			} else if !found {
-				svc.Client.Log.V(1).Info("Could not fetch resource", "name", jobName)
+				svc.Log.V(1).Info("Could not fetch resource", "name", jobName)
 			}
 			jobs[stepname] = &job
 		} else {

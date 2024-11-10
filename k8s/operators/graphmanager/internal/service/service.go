@@ -15,7 +15,7 @@ import (
 )
 
 type EDAGRunService struct {
-	Client clusterclient.EDAGRunClient
+	Client clusterclient.ClusterClient
 	Log    *logr.Logger
 }
 

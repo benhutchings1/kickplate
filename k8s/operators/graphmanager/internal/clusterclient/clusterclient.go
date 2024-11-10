@@ -16,13 +16,13 @@ import (
 
 var IsNotFoundFn = apierrors.IsNotFound
 
-type EDAGRunClient struct {
+type ClusterClient struct {
 	K8sClient client.Client
 	Scheme    *runtime.Scheme
 	Log       *logr.Logger
 }
 
-func (client *EDAGRunClient) FetchResource(
+func (client *ClusterClient) FetchResource(
 	ctx context.Context,
 	key types.NamespacedName,
 	obj client.Object,
@@ -38,7 +38,7 @@ func (client *EDAGRunClient) FetchResource(
 	return true, nil
 }
 
-func (client *EDAGRunClient) UpdateResources(
+func (client *ClusterClient) UpdateResources(
 	ctx context.Context,
 	obj client.Object,
 ) error {
@@ -50,7 +50,7 @@ func (client *EDAGRunClient) UpdateResources(
 	return nil
 }
 
-func (client *EDAGRunClient) UpdateStatus(
+func (client *ClusterClient) UpdateStatus(
 	ctx context.Context,
 	run *graphv1alpha1.EDAGRun,
 	newCondition metav1.Condition,
@@ -70,11 +70,11 @@ func (client *EDAGRunClient) UpdateStatus(
 	return nil
 }
 
-func (client *EDAGRunClient) CreateJob(ctx context.Context, obj client.Object) error {
+func (client *ClusterClient) CreateJob(ctx context.Context, obj client.Object) error {
 	return client.K8sClient.Create(ctx, obj)
 }
 
-func (client *EDAGRunClient) SetControllerReference(
+func (client *ClusterClient) SetControllerReference(
 	ctx context.Context,
 	parentObj client.Object,
 	childObj client.Object,

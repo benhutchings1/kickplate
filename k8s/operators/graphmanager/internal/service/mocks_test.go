@@ -13,7 +13,7 @@ import (
 )
 
 type MockEDAGRunClient struct {
-	*clusterclient.EDAGRunClient
+	*clusterclient.ClusterClient
 	mock.Mock
 }
 

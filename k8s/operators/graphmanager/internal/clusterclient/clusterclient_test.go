@@ -19,7 +19,7 @@ func TestFetchResource(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -52,7 +52,7 @@ func TestFetchResourceFailedNotFoundShouldReturnError(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -85,7 +85,7 @@ func TestFetchResourceFailedFoundShouldReturnError(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -111,7 +111,7 @@ func TestUpdateResource(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -134,7 +134,7 @@ func TestUpdateResourceShouldReturnError(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -154,7 +154,7 @@ func TestUpdateStatus(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,
@@ -185,7 +185,7 @@ func TestUpdateStatusShouldReturnError(t *testing.T) {
 	newMockScheme := NewMockScheme()
 	mockK8sClient := MockK8sClient{}
 
-	client := clusterclient.EDAGRunClient{
+	client := clusterclient.ClusterClient{
 		K8sClient: &mockK8sClient,
 		Scheme:    newMockScheme.Scheme,
 		Log:       &newLog,

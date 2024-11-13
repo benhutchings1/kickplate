@@ -60,7 +60,7 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		panic("Failed to load config")
 	}
 
-	client := clusterclient.ClientImp{
+	client := clusterclient.ClusterClient{
 		K8sClient: r.Client,
 		Scheme:    r.Scheme,
 		Log:       &log,

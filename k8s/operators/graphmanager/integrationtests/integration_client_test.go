@@ -16,14 +16,14 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var clusterclient client.ClientImp
+var clusterclient client.ClusterClient
 
 var _ = Describe("EDAGRun Cluster Client", func() {
 	ctx := context.Background()
 
 	BeforeEach(func() {
 		By("instansiating cluster client")
-		clusterclient = client.ClientImp{
+		clusterclient = client.ClusterClient{
 			K8sClient: k8sClient,
 			Scheme:    scheme.Scheme,
 			Log:       &logf.Log,

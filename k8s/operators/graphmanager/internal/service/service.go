@@ -106,12 +106,11 @@ func (svc *EDAGRunService) StartNewJobs(
 	}
 
 	// Check if any failed first before starting new jobs
-	for stepname := range jobs {
-		job := jobs[stepname]
-		if job != nil && isJobFailed(job) {
-			svc.Log.V(0).Info("Found failed job", "job", job.Name)
-			return true, nil
-		}
+	// Also check if run has finished
+	if failed, finished := svc.checkJobsFailedOrFinished(jobs); failed {
+		return true, nil
+	} else if finished {
+		return false, nil
 	}
 
 	for stepname, job := range jobs {
@@ -127,6 +126,21 @@ func (svc *EDAGRunService) StartNewJobs(
 		}
 	}
 	return false, nil
+}
+
+func (svc *EDAGRunService) checkJobsFailedOrFinished(jobs map[string]*batchv1.Job) (failed bool, finished bool) {
+	finished = true
+	failed = false
+	for stepname := range jobs {
+		job := jobs[stepname]
+		if job != nil && isJobFailed(job) {
+			svc.Log.V(0).Info("Found failed job", "job", job.Name)
+			failed = true
+		} else if job == nil || !IsJobComplete(job) {
+			finished = false
+		}
+	}
+	return failed, finished
 }
 
 func (svc *EDAGRunService) fetchJobs(
@@ -237,12 +251,13 @@ func checkIfDependentsAreFinished(
 	edag *graphv1alpha1.EDAG,
 ) bool {
 	stepSpec := edag.Spec.Steps[stepName]
-	if stepSpec.Dependencies == nil {
+	if stepSpec.Dependencies == nil || len(stepSpec.Dependencies) == 0 {
 		return true
 	}
 
 	for _, dependentStepname := range stepSpec.Dependencies {
-		if !IsJobComplete((*jobs)[dependentStepname]) {
+		dependentJob := (*jobs)[dependentStepname]
+		if dependentJob == nil || !IsJobComplete(dependentJob) {
 			return false
 		}
 	}

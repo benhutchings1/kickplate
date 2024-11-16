@@ -251,3 +251,20 @@ func TestSetControllerReference(t *testing.T) {
 
 	assert.NoError(t, err)
 }
+
+func TestSetControllerReferenceFailedOnSameObject(t *testing.T) {
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.ClusterClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	edag := graphv1alpha1.EDAG{}
+
+	err := client.SetControllerReference(context.TODO(), &edag, &edag)
+
+	assert.Error(t, err)
+}

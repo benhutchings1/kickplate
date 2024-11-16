@@ -58,10 +58,10 @@ func TestCreateJob(t *testing.T) {
 		"CreateJob", context.TODO(), mock.AnythingOfType("*v1.Job"),
 	).Return(nil).Times(1)
 	mockedClient.On(
-		"UpdateStatus", context.TODO(), mock.Anything, expectedCondition,
+		"UpdateStatus", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun"), expectedCondition,
 	).Return(nil).Times(1)
 	mockedClient.On(
-		"SetControllerReference", expectedRun, mock.Anything,
+		"SetControllerReference", context.TODO(), expectedRun, mock.AnythingOfType("*v1.Job"),
 	).Return(nil).Times(1)
 
 	assert.NoError(t, mockedService.CreateJob(
@@ -177,10 +177,10 @@ func TestStartNewJobsShouldStartNewJobs(t *testing.T) {
 		"CreateJob", context.TODO(), mock.AnythingOfType("*v1.Job"),
 	).Run(verifyJobRequest).Return(nil).Times(2)
 	mockedClient.On(
-		"UpdateStatus", context.TODO(), mock.Anything, mock.Anything,
+		"UpdateStatus", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun"), mock.AnythingOfType("v1.Condition"),
 	).Return(nil).Times(2)
 	mockedClient.On(
-		"SetControllerReference", mock.Anything, mock.Anything,
+		"SetControllerReference", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun"), mock.AnythingOfType("*v1.Job"),
 	).Return(nil).Times(2)
 
 	isfailed, err := mockedService.StartNewJobs(

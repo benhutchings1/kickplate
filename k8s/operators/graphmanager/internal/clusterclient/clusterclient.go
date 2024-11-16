@@ -2,6 +2,7 @@ package clusterclient
 
 import (
 	"context"
+	"errors"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
 	"github.com/go-logr/logr"
@@ -84,6 +85,20 @@ func (client *ClusterClient) SetControllerReference(
 		"Setting controller reference",
 		"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),
 	)
+
+	if parentObj.GetObjectKind() == childObj.GetObjectKind() && parentObj.GetName() == childObj.GetName() {
+		errormsg := "an object cannot reference itself"
+		err := errors.New(errormsg)
+		client.Log.Error(
+			err, errormsg,
+			"ParentKind", parentObj.GetObjectKind(),
+			"ChildKind", childObj.GetObjectKind(),
+			"ParentName", parentObj.GetName(),
+			"ChildName", childObj.GetName(),
+		)
+		return err
+	}
+
 	if err := SetControllerReferenceFn(childObj, parentObj, client.Scheme); err != nil {
 		client.Log.Error(
 			err, "Failed to set controller reference",

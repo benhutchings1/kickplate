@@ -207,8 +207,4 @@ var _ = BeforeSuite(func() {
 			EDAGName: edagName,
 		},
 	}
-
-	By("creating a sample EDAGRun resource")
-	Expect(k8sClient.Create(ctx, &SampleEdag)).To(Succeed())
-	Expect(k8sClient.Create(ctx, &SampleEdagRun)).To(Succeed())
 })

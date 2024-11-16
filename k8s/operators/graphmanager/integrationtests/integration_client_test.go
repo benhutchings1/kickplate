@@ -18,7 +18,19 @@ import (
 
 var clusterclient client.ClusterClient
 
-var _ = Describe("EDAGRun Cluster Client", func() {
+var _ = Describe("Cluster Client", Ordered, func() {
+	BeforeAll(func() {
+		By("creating a sample EDAGRun resource")
+		Expect(k8sClient.Create(ctx, &SampleEdag)).To(Succeed())
+		Expect(k8sClient.Create(ctx, &SampleEdagRun)).To(Succeed())
+	})
+
+	AfterAll(func() {
+		By("removing test resources")
+		Expect(k8sClient.Delete(ctx, &SampleEdag)).To(Succeed())
+		Expect(k8sClient.Delete(ctx, &SampleEdagRun)).To(Succeed())
+	})
+
 	ctx := context.Background()
 
 	BeforeEach(func() {

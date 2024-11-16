@@ -57,7 +57,7 @@ func (c *MockEDAGRunClient) SetControllerReference(
 	parentObj client.Object,
 	childObj client.Object,
 ) error {
-	args := c.Called(parentObj, childObj)
+	args := c.Called(ctx, parentObj, childObj)
 	return args.Error(0)
 }
 

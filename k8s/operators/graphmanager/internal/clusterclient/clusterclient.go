@@ -15,6 +15,7 @@ import (
 )
 
 var IsNotFoundFn = apierrors.IsNotFound
+var SetControllerReferenceFn = ctrl.SetControllerReference
 
 type ClusterClient struct {
 	K8sClient client.Client
@@ -79,7 +80,11 @@ func (client *ClusterClient) SetControllerReference(
 	parentObj client.Object,
 	childObj client.Object,
 ) error {
-	if err := ctrl.SetControllerReference(parentObj, childObj, client.Scheme); err != nil {
+	client.Log.Info(
+		"Setting controller reference",
+		"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),
+	)
+	if err := SetControllerReferenceFn(childObj, parentObj, client.Scheme); err != nil {
 		client.Log.Error(
 			err, "Failed to set controller reference",
 			"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),

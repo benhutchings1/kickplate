@@ -33,7 +33,7 @@ var _ = Describe("EDAGRun Cluster Client", func() {
 	Context("when fetching a resource", func() {
 		It("should fetch existing EDAGRun", func() {
 			fetchedRun := &graphv1alpha1.EDAGRun{}
-			err, found := clusterclient.FetchResource(ctx, types.NamespacedName{
+			found, err := clusterclient.FetchResource(ctx, types.NamespacedName{
 				Name:      "sampleedagrun",
 				Namespace: SampleDefaultInputs.Namespace,
 			}, fetchedRun)
@@ -42,7 +42,7 @@ var _ = Describe("EDAGRun Cluster Client", func() {
 		})
 		It("should return error on existing kind but not found instance", func() {
 			fetchedEdag := &graphv1alpha1.EDAG{}
-			err, found := clusterclient.FetchResource(ctx, types.NamespacedName{
+			found, err := clusterclient.FetchResource(ctx, types.NamespacedName{
 				Name:      "somerandomthing",
 				Namespace: SampleDefaultInputs.Namespace,
 			}, fetchedEdag)
@@ -169,8 +169,8 @@ var _ = Describe("EDAGRun Cluster Client", func() {
 			}, child)).To(Succeed())
 
 			found := false
-			for _, ownerRef := range child.GetOwnerReferences() {
-				if ownerRef.Kind == "EDAGRun" {
+			for _, ownerRef := range parent.GetOwnerReferences() {
+				if ownerRef.Kind == "EDAGRun" || ownerRef.Name == "sampleedagrun" {
 					found = true
 				}
 			}

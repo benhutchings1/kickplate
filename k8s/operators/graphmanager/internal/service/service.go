@@ -177,12 +177,10 @@ func (svc *EDAGRunService) CheckRunOwnerReference(
 	edag *graphv1alpha1.EDAG,
 	run *graphv1alpha1.EDAGRun,
 ) error {
-
-	// NOT WORKING
 	svc.Log.V(2).Info("Checking owner references", "edag", edag.Name, "edagrun", run.Name)
-	if run.OwnerReferences != nil {
-		for _, ref := range run.OwnerReferences {
-			if ref.Kind == "EDAG" && ref.Name == edag.Name {
+	if edag.OwnerReferences != nil {
+		for _, ref := range edag.OwnerReferences {
+			if ref.Kind == "EDAGRun" && ref.Name == run.Name {
 				svc.Log.V(2).Info(
 					"Found owner reference", "Edag Name", edag.Name, "Edagrun name", run.Name,
 				)

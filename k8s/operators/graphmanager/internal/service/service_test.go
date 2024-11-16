@@ -378,8 +378,62 @@ func TestStartNewJobsFailedToFetchJobs(t *testing.T) {
 	assert.Error(t, returnErr)
 }
 
-func TestCheckRunOwnerReference(t *testing.T) {
-	t.Error("Not Implemented'")
+func TestCheckRunOwnerReferenceShouldCreateOwnersNil(t *testing.T) {
+	newLog := logr.Discard()
+	mockedClient := new(MockEDAGRunClient)
+	mockedService := service.EDAGRunService{
+		Client: mockedClient,
+		Log:    &newLog,
+	}
+	sampleinps := SampleInputsFactory()
+	run := SampleEDAGRunFactory(sampleinps)
+	edag := SampleEDAGFactory(sampleinps)
+
+	mockedClient.On("SetControllerReference", context.TODO(), &edag, &run).Return(nil).Times(1)
+
+	err := mockedService.CheckRunOwnerReference(context.TODO(), &edag, &run)
+	assert.NoError(t, err)
+}
+
+func TestCheckRunOwnerReferenceShouldReturnErrIfFailed(t *testing.T) {
+	newLog := logr.Discard()
+	mockedClient := new(MockEDAGRunClient)
+	mockedService := service.EDAGRunService{
+		Client: mockedClient,
+		Log:    &newLog,
+	}
+	sampleinps := SampleInputsFactory()
+	run := SampleEDAGRunFactory(sampleinps)
+	edag := SampleEDAGFactory(sampleinps)
+
+	raisederror := errors.New("Failed to set reference")
+
+	mockedClient.On("SetControllerReference", context.TODO(), &edag, &run).Return(raisederror).Times(1)
+
+	err := mockedService.CheckRunOwnerReference(context.TODO(), &edag, &run)
+	assert.Equal(t, err, raisederror)
+}
+
+func TestCheckRunOwnerReferenceShouldFindExisting(t *testing.T) {
+	newLog := logr.Discard()
+	mockedClient := new(MockEDAGRunClient)
+	mockedService := service.EDAGRunService{
+		Client: mockedClient,
+		Log:    &newLog,
+	}
+	sampleinps := SampleInputsFactory()
+	run := SampleEDAGRunFactory(sampleinps)
+	edag := SampleEDAGFactory(sampleinps)
+
+	newRef := metav1.OwnerReference{
+		Kind: "EDAGRun", Name: run.Name,
+	}
+	edag.OwnerReferences = []metav1.OwnerReference{newRef}
+
+	mockedClient.On("SetControllerReference", context.TODO(), &edag, &run).Return(nil).Times(1)
+
+	err := mockedService.CheckRunOwnerReference(context.TODO(), &edag, &run)
+	assert.NoError(t, err)
 }
 
 func TestIsRunNotComplete(t *testing.T) {

@@ -11,7 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func TestFetchResource(t *testing.T) {
@@ -119,7 +122,7 @@ func TestUpdateResource(t *testing.T) {
 
 	obj := graphv1alpha1.EDAG{}
 
-	mockK8sClient.On("Update", context.TODO(), &obj).Return(
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
 		nil,
 	).Times(1)
 	rtnErr := client.UpdateResources(context.TODO(), &obj)
@@ -141,7 +144,7 @@ func TestUpdateResourceShouldReturnError(t *testing.T) {
 	}
 	obj := graphv1alpha1.EDAG{}
 
-	mockK8sClient.On("Update", context.TODO(), &obj).Return(
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
 		err,
 	).Times(1)
 	rtnErr := client.UpdateResources(context.TODO(), &obj)
@@ -170,7 +173,7 @@ func TestUpdateStatus(t *testing.T) {
 	mockedSubResourceWriter := MockSubResourceWriter{}
 
 	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
-	mockedSubResourceWriter.On("Update", context.TODO(), &obj).Return(
+	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).Return(
 		nil,
 	).Times(1)
 
@@ -201,7 +204,7 @@ func TestUpdateStatusShouldReturnError(t *testing.T) {
 	mockedSubResourceWriter := MockSubResourceWriter{}
 
 	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
-	mockedSubResourceWriter.On("Update", context.TODO(), &obj).Return(
+	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).Return(
 		err,
 	).Times(1)
 
@@ -211,5 +214,40 @@ func TestUpdateStatusShouldReturnError(t *testing.T) {
 }
 
 func TestSetControllerReference(t *testing.T) {
-	t.Error("Not implemented properly")
+	newLog := logr.Discard()
+	newMockScheme := NewMockScheme()
+	mockK8sClient := MockK8sClient{}
+
+	client := clusterclient.ClusterClient{
+		K8sClient: &mockK8sClient,
+		Scheme:    newMockScheme.Scheme,
+		Log:       &newLog,
+	}
+	edag := graphv1alpha1.EDAG{}
+	run := graphv1alpha1.EDAGRun{}
+
+	clusterclient.SetControllerReferenceFn = func(
+		owner v1.Object,
+		controlled v1.Object,
+		scheme *runtime.Scheme,
+		opts ...controllerutil.OwnerReferenceOption,
+	) error {
+		edagOwner, ok := owner.(*graphv1alpha1.EDAGRun)
+		assert.True(t, ok)
+		assert.Equal(t, edagOwner, &run)
+
+		runControlled, ok := controlled.(*graphv1alpha1.EDAG)
+		assert.True(t, ok)
+		assert.Equal(t, runControlled, &edag)
+
+		return nil
+	}
+
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
+		nil,
+	).Times(1)
+
+	err := client.SetControllerReference(context.TODO(), &edag, &run)
+
+	assert.NoError(t, err)
 }

@@ -45,8 +45,8 @@ type EDAGRun struct {
 
 // EDAGRunList contains a list of EDAGRun
 type EDAGRunList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta `          json:",inline"`
+	metav1.ListMeta `          json:"metadata,omitempty"`
 	Items           []EDAGRun `json:"items"`
 }
 

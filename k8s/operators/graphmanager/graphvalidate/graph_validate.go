@@ -87,7 +87,11 @@ func newVisitedMap(graph *map[string][]string) *map[string]bool {
 	return &visited
 }
 
-func visitNode(node string, graph *map[string][]string, visited *map[string]bool) ([]string, error) {
+func visitNode(
+	node string,
+	graph *map[string][]string,
+	visited *map[string]bool,
+) ([]string, error) {
 	for _, adjacentNodes := range (*graph)[node] {
 		if (*visited)[adjacentNodes] {
 			return nil, fmt.Errorf("cycle found")

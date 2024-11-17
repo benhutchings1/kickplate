@@ -122,9 +122,11 @@ func TestUpdateResource(t *testing.T) {
 
 	obj := graphv1alpha1.EDAG{}
 
-	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
-		nil,
-	).Times(1)
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).
+		Return(
+			nil,
+		).
+		Times(1)
 	rtnErr := client.UpdateResources(context.TODO(), &obj)
 
 	assert.NoError(t, rtnErr)
@@ -144,9 +146,11 @@ func TestUpdateResourceShouldReturnError(t *testing.T) {
 	}
 	obj := graphv1alpha1.EDAG{}
 
-	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
-		err,
-	).Times(1)
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).
+		Return(
+			err,
+		).
+		Times(1)
 	rtnErr := client.UpdateResources(context.TODO(), &obj)
 
 	assert.Error(t, rtnErr)
@@ -173,9 +177,11 @@ func TestUpdateStatus(t *testing.T) {
 	mockedSubResourceWriter := MockSubResourceWriter{}
 
 	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
-	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).Return(
-		nil,
-	).Times(1)
+	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).
+		Return(
+			nil,
+		).
+		Times(1)
 
 	rtnErr := client.UpdateStatus(context.TODO(), &obj, newCondition)
 
@@ -204,9 +210,11 @@ func TestUpdateStatusShouldReturnError(t *testing.T) {
 	mockedSubResourceWriter := MockSubResourceWriter{}
 
 	mockK8sClient.On("Status").Return(&mockedSubResourceWriter)
-	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).Return(
-		err,
-	).Times(1)
+	mockedSubResourceWriter.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun")).
+		Return(
+			err,
+		).
+		Times(1)
 
 	rtnErr := client.UpdateStatus(context.TODO(), &obj, newCondition)
 
@@ -243,9 +251,11 @@ func TestSetControllerReference(t *testing.T) {
 		return nil
 	}
 
-	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).Return(
-		nil,
-	).Times(1)
+	mockK8sClient.On("Update", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAG"), mock.Anything).
+		Return(
+			nil,
+		).
+		Times(1)
 
 	err := client.SetControllerReference(context.TODO(), &edag, &run)
 

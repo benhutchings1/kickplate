@@ -19,12 +19,21 @@ type MockSubResourceWriter struct {
 	client.SubResourceWriter
 }
 
-func (c *MockK8sClient) Get(ctx context.Context, key types.NamespacedName, obj client.Object, opts ...client.GetOption) error {
+func (c *MockK8sClient) Get(
+	ctx context.Context,
+	key types.NamespacedName,
+	obj client.Object,
+	opts ...client.GetOption,
+) error {
 	args := c.Called(ctx, key, obj, opts)
 	return args.Error(0)
 }
 
-func (c *MockK8sClient) Update(ctx context.Context, obj client.Object, opts ...client.UpdateOption) error {
+func (c *MockK8sClient) Update(
+	ctx context.Context,
+	obj client.Object,
+	opts ...client.UpdateOption,
+) error {
 	args := c.Called(ctx, obj, opts)
 	return args.Error(0)
 }
@@ -34,7 +43,11 @@ func (c *MockK8sClient) Status() client.SubResourceWriter {
 	return args.Get(0).(client.SubResourceWriter)
 }
 
-func (srw *MockSubResourceWriter) Update(ctx context.Context, obj client.Object, opts ...client.SubResourceUpdateOption) error {
+func (srw *MockSubResourceWriter) Update(
+	ctx context.Context,
+	obj client.Object,
+	opts ...client.SubResourceUpdateOption,
+) error {
 	args := srw.Called(ctx, obj)
 	return args.Error(0)
 }

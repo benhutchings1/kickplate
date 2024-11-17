@@ -86,7 +86,8 @@ func (client *ClusterClient) SetControllerReference(
 		"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),
 	)
 
-	if parentObj.GetObjectKind() == childObj.GetObjectKind() && parentObj.GetName() == childObj.GetName() {
+	if parentObj.GetObjectKind() == childObj.GetObjectKind() &&
+		parentObj.GetName() == childObj.GetName() {
 		errormsg := "an object cannot reference itself"
 		err := errors.New(errormsg)
 		client.Log.Error(

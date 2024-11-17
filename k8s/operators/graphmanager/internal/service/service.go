@@ -128,7 +128,9 @@ func (svc *EDAGRunService) StartNewJobs(
 	return false, nil
 }
 
-func (svc *EDAGRunService) checkJobsFailedOrFinished(jobs map[string]*batchv1.Job) (failed bool, finished bool) {
+func (svc *EDAGRunService) checkJobsFailedOrFinished(
+	jobs map[string]*batchv1.Job,
+) (failed bool, finished bool) {
 	finished = true
 	failed = false
 	for stepname := range jobs {
@@ -192,7 +194,14 @@ func (svc *EDAGRunService) CheckRunOwnerReference(
 	if err := svc.Client.SetControllerReference(
 		ctx, edag, run,
 	); err != nil {
-		svc.Log.Error(err, "Failed to check owner references", "Edag Name", edag.Name, "Edagrun name", run.Name)
+		svc.Log.Error(
+			err,
+			"Failed to check owner references",
+			"Edag Name",
+			edag.Name,
+			"Edagrun name",
+			run.Name,
+		)
 		return err
 	}
 	return nil
@@ -206,7 +215,8 @@ func (svc *EDAGRunService) IsRunComplete(run *graphv1alpha1.EDAGRun) bool {
 	}
 
 	latestCondition := conditions[len(conditions)-1]
-	complete := latestCondition.Type == string(RunFailed) || latestCondition.Type == string(RunSucceeded)
+	complete := latestCondition.Type == string(RunFailed) ||
+		latestCondition.Type == string(RunSucceeded)
 	if complete {
 		svc.Log.V(0).Info("Run already complete")
 	}
@@ -233,7 +243,8 @@ func (svc *EDAGRunService) FetchEDAGRun(
 	edagRunNamespacedName types.NamespacedName,
 ) (edagrun *graphv1alpha1.EDAGRun, err error) {
 	fetchedEdagrun := &graphv1alpha1.EDAGRun{}
-	if found, err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun); err != nil || !found {
+	if found, err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun); err != nil ||
+		!found {
 		svc.Log.V(0).Info(
 			"Aborting reconcile, assuming EDAGRun has been deleted",
 			"name", edagRunNamespacedName.Name, "namespace", edagRunNamespacedName.Namespace,

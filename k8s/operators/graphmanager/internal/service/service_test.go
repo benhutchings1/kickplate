@@ -112,7 +112,12 @@ func TestStartNewJobsShouldDoNothing(t *testing.T) {
 	}).Return(true, nil).Times(1)
 
 	isfailed, err := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.False(t, isfailed)
@@ -177,14 +182,25 @@ func TestStartNewJobsShouldStartNewJobs(t *testing.T) {
 		"CreateJob", context.TODO(), mock.AnythingOfType("*v1.Job"),
 	).Run(verifyJobRequest).Return(nil).Times(2)
 	mockedClient.On(
-		"UpdateStatus", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun"), mock.AnythingOfType("v1.Condition"),
+		"UpdateStatus",
+		context.TODO(),
+		mock.AnythingOfType("*v1alpha1.EDAGRun"),
+		mock.AnythingOfType("v1.Condition"),
 	).Return(nil).Times(2)
 	mockedClient.On(
-		"SetControllerReference", context.TODO(), mock.AnythingOfType("*v1alpha1.EDAGRun"), mock.AnythingOfType("*v1.Job"),
+		"SetControllerReference",
+		context.TODO(),
+		mock.AnythingOfType("*v1alpha1.EDAGRun"),
+		mock.AnythingOfType("*v1.Job"),
 	).Return(nil).Times(2)
 
 	isfailed, err := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.False(t, isfailed)
@@ -252,7 +268,12 @@ func TestStartNewJobsShouldFailIfJobCreationFails(t *testing.T) {
 	).Run(verifyJobRequest).Return(createErr).Times(1)
 
 	_, err := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.Error(t, err)
@@ -290,7 +311,12 @@ func TestStartNewJobsShouldFailOnFailedJob(t *testing.T) {
 	).Run(getJobDetail).Return(true, nil).Times(1)
 
 	isfailed, err := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.True(t, isfailed)
@@ -342,7 +368,12 @@ func TestStartNewJobsAllJobsFinished(t *testing.T) {
 	).Run(getJobDetail).Return(true, nil).Times(5)
 
 	isfailed, err := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.False(t, isfailed)
@@ -372,7 +403,12 @@ func TestStartNewJobsFailedToFetchJobs(t *testing.T) {
 	).Return(false, err).Times(1)
 
 	_, returnErr := mockedService.StartNewJobs(
-		context.TODO(), &run, &edag, sampleinps.Namespace, sampleinps.Port, sampleinps.DefaultLabels,
+		context.TODO(),
+		&run,
+		&edag,
+		sampleinps.Namespace,
+		sampleinps.Port,
+		sampleinps.DefaultLabels,
 	)
 
 	assert.Error(t, returnErr)
@@ -408,7 +444,9 @@ func TestCheckRunOwnerReferenceShouldReturnErrIfFailed(t *testing.T) {
 
 	raisederror := errors.New("Failed to set reference")
 
-	mockedClient.On("SetControllerReference", context.TODO(), &edag, &run).Return(raisederror).Times(1)
+	mockedClient.On("SetControllerReference", context.TODO(), &edag, &run).
+		Return(raisederror).
+		Times(1)
 
 	err := mockedService.CheckRunOwnerReference(context.TODO(), &edag, &run)
 	assert.Equal(t, err, raisederror)

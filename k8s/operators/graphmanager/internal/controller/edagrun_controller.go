@@ -37,6 +37,8 @@ type EDAGRunReconciler struct {
 	Scheme *runtime.Scheme
 }
 
+var LoadConfigFn = LoadConfig
+
 // +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAG,verbs=get;list
 // +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=graph.kickplate.com,resources=EDAGRuns/status,verbs=get;update;patch
@@ -54,11 +56,7 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	log := log.FromContext(ctx)
 	log.V(0).Info("Detected change, running reconcile")
 
-	config, err := LoadConfig()
-	if err != nil {
-		log.Error(err, "Failed to load config")
-		panic("Failed to load config")
-	}
+	config := LoadConfigFn()
 
 	client := clusterclient.ClusterClient{
 		K8sClient: r.Client,
@@ -86,10 +84,11 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if err = svc.CheckRunOwnerReference(ctx, edag, run); err != nil {
+		log.Error(err, "Failed to check run owner reference")
 		return ctrl.Result{}, nil
 	}
 
-	if complete := svc.IsRunComplete(run); complete {
+	if svc.IsRunComplete(run) {
 		return ctrl.Result{}, nil
 	}
 

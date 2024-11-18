@@ -1,0 +1,11 @@
+@use "../abstracts/variables" as themes;
+@use "./themeController" as themeController;
+
+.dark {
+    @include themeController.themeController(themes.$dark)
+}
+
+.light {
+    @include themeController.themeController(themes.$light)
+}
+

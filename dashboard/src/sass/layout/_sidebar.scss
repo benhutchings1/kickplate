@@ -1,0 +1,22 @@
+@use "../abstracts/variables" as vars;
+
+.sidebar {
+    .icon {
+        padding-right: 5px;
+    }
+    
+    .nav-item {
+        font-size: 125%;
+        padding-top: 3%;
+        padding-bottom: 3%;
+    }
+    
+    .theme-toggle {
+        margin-top: 30%;
+    
+        .theme-toggle-text{
+            font-size: 120%;
+            margin-bottom: 20px;
+        }
+    }
+}

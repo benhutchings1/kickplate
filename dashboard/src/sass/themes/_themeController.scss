@@ -1,0 +1,18 @@
+// Styles per component
+@use "components/sidebar" as sidebar;
+@use "components/navbar" as navbar;
+@use "components/main_canvas" as mainCanvas;
+
+@mixin themeController($themeMap){
+    .sidebar {
+        @include sidebar.sidebarTheme($themeMap)
+    }
+
+    .navbar{
+        @include navbar.navbarTheme($themeMap)
+    }
+
+    .main-canvas {
+        @include mainCanvas.mainCanvas($themeMap)
+    }
+}

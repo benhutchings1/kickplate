@@ -1,25 +1,25 @@
 [packages]
-kubernetes = "*"
-jsonschema = "*"
 fastapi = {extras = ["all"], version = "*"}
-uvicorn = "*"
-cryptography = "*"
 pydantic = "*"
-pydantic-extra-types = "*"
+uvicorn = "*"
 pydantic-settings = "*"
-pydantic-core = "*"
-pyjwt = {extras = ["crypto"], version = "*"}
 asyncio = "*"
+pytest-asyncio = "*"
+kubernetes = "*"
+kubernetes-asyncio = "*"
+cryptography = "*"
+pyjwt = {extras = ["crypto"], version = "*"}
 
 [dev-packages]
+isort = "*"
+black = "*"
+mypy = "*"
 pytest = "*"
 pytest-asyncio = "*"
+httpx = "*"
 flake8 = "*"
-black = "*"
-isort = "*"
 requests-mock = "*"
 mock = "*"
-pip-audit = "*"
 
 [requires]
 python_version = "3.10"

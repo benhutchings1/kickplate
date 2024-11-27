@@ -46,6 +46,16 @@ A hot step uses a producer-consumer pattern. Jobs are placed on the RabbitMQ mes
 ### Telemetry, Metrics & Alerting
 Telemetry and metrics are not currently implemented. This would help operator oversight and respones speed to errors.
 
+### Architecture Resilience 
+Proposed measures to architecture to improve platform resiliency
+ - Utilising pod replication on deployments
+ - Geozone redundant storage (16 9's SLA) with daily backup policy 
+ - Blue-Green kubernetes deployments to perform cluster upgrades and provide a backup for minimal downtime disaster recovery
+ - Utilising kubernetes rollout to do rolling updates with zero downtime
+ - Monitoring and alerting for rapid response
+ - CDN for redundancy and speed improvements
+- Horizontal scaling of cluster to improve performance under high loads
+
 ### Redis Cache
 For some high speed executions a Redis cache could help data transfer times
 
@@ -55,3 +65,5 @@ Given unknown code is running on the platform, some further steps could be taken
 ### T-Shirt Sizing of Resource Limits
 Allow selecting of resource limits via T-Shirt sizes (S, M, L) depending on resource requirements of jobs
 
+### Scheduled EDAGs
+Allow EDAGs to be performed on a schedule.

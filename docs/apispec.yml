@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: Kickplate API
+  version: 0.1.0
+externalDocs:
+  description: Find out more about Swagger
+  url: https://github.com/benhutchings1/kickplate
+tags:
+  - name: EDAG
+    description: EDAG Management
+  - name: Health
+    description: API Health Check
+  - name: EDAG Execution
+    description: EDAG execution management
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Healthy
+  /api/v1/{EDAGname}:
+    post:
+      tags:
+        - EDAG
+      parameters:
+        - name: EDAGname
+          in: path
+          description: new name of EDAG
+          schema:
+            type: string
+          required: true
+      summary: Create a new EDAG
+      operationId: createEDAG
+      requestBody:
+        required: true
+        description: EDAG definition
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EDAG'
+      responses:
+        '200':
+          description: Successful operation
+        '409':
+          description: EDAGname already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG already exists
+        '404':
+          description: Image not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: Image not found
+        '422':
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: Invalid EDAG, Missing input - name
+      security:
+        - kickplate_auth:
+            - write:EDAG
+    put:
+      tags:
+        - EDAG
+      parameters:
+          - name: EDAGname
+            in: path
+            description: name of existing EDAG
+            schema:
+              type: string
+            required: true
+      summary: Update an existing EDAG
+      operationId: updateEDAG
+      requestBody:
+        required: true
+        description: Updated EDAG definition
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EDAG'
+      responses:
+        '200':
+          description: Successful operation
+        '404':
+          description: EDAG not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG not found
+        '422':
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: Invalid EDAG, Missing input - name
+      security:
+        - kickplate_auth:
+            - write:EDAG
+    get:
+      tags:
+        - EDAG
+      parameters:
+          - name: EDAGname
+            in: path
+            description: name of EDAG
+            schema:
+              type: string
+            required: true
+      summary: Fetch an existing EDAG
+      operationId: fetchEDAG
+      responses:
+        '200':
+          description: Fetched EDAG
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EDAG'
+        '404':
+          description: EDAG not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG not found
+      security:
+        - kickplate_auth:
+            - read:EDAG
+    delete:
+      tags:
+        - EDAG
+      parameters:
+          - name: EDAGname
+            in: path
+            description: name of EDAG
+            schema:
+              type: string
+            required: true
+      summary: Delete an existing EDAG
+      operationId: deleteEDAG
+      responses:
+        '200':
+          description: EDAG deleted
+        '404':
+          description: EDAG not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG not found
+      security:
+        - kickplate_auth:
+            - read:EDAG
+  /api/v1/{EDAGname}/run:
+    post:
+      tags:
+          - EDAG Execution
+      parameters:
+        - name: EDAGname
+          in: path
+          description: name of EDAG
+          schema:
+            type: string
+          required: true
+      summary: Run EDAG
+      operationId: runEDAG
+      requestBody:
+        required: true
+        description: EDAG definition
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                EDAGname:
+                  type: string
+                  example: myEDAG
+                RunParameters:
+                  type: object
+                  additionalProperties: true
+                  example:
+                    verbose: true
+                    outputlocation: blob
+      responses:
+        '200':
+          description: EDAG execution successfully started
+        '404':
+          description: EDAG not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG not found
+      security:
+        - kickplate_auth:
+            - run:EDAG
+            - read:EDAG
+  /api/v1/{EDAGRunID}/run:
+    get:
+      tags:
+          - EDAG Execution
+      parameters:
+        - name: EDAGRunID
+          in: path
+          description: ID of EDAG Run
+          schema:
+            type: string
+          required: true
+      summary: Get EDAG run status
+      operationId: getEDAGStatus
+      responses:
+        '200':
+          description: EDAG status successfully fetched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunStatus'
+        '404':
+          description: EDAG run not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetail'
+              example:
+                detail: EDAG run not found
+      security:
+        - kickplate_auth:
+            - run:EDAG
+            - read:EDAG
+components:
+  schemas:
+    RunStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - "Not Started"
+            - "In Progress"
+            - "Failed"
+            - "Finished"
+    ErrorDetail:
+      type: object
+      properties:
+        detail:
+          type: string
+    EDAG:
+      type: object
+      properties:
+        steps:
+          type: array
+          items:
+            type: object
+            required:
+              - name
+              - image
+            properties:
+              name:
+                type: string
+                example: step1
+              image:
+                type: string
+                example: sampleimage/latest
+              replicas:
+                type: number
+                maximum: 10
+                minimum: 1
+                default: 1
+              dependencies:
+                type: array
+                items:
+                  type: string
+                example: 
+                  - step2
+              envs:
+                type: object
+                additionalProperties:
+                  type: string
+                example:
+                  env: sbx
+              arguments:
+                type: array
+                items:
+                  type: string
+                example:
+                  - python
+                  - main.py
+              commands:
+                type: array
+                example:
+                  - pipenv
+                  - shell
+                items:
+                  type: string
+  securitySchemes:
+    kickplate_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://auth.kickplate.com
+          scopes:
+            write:EDAG: create EDAG
+            read:EDAG: read EDAG
+            delete:EDAG: delete EDAG
+            run:EDAG: run EDAG

@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -61,6 +62,7 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 			}
 			Expect(k8sClient.Create(ctx, simpleedagrun)).To(Succeed())
 
+			By("creating overriding config values")
 			var mockLoadConfigFn = func() (config controller.Config) {
 				return controller.Config{
 					Namespace:      SampleDefaultInputs.Namespace,
@@ -80,15 +82,14 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 			Expect(k8sClient.Delete(ctx, simpleedagrun)).To(Succeed())
 		})
 
-		It("should create jobs for simple edagrun with 1 step", func() {
+		It("should create jobs for edag with 1 step", func() {
 			request := reconcile.Request{NamespacedName: types.NamespacedName{
-				Name: simpleedagrun.Name, Namespace: SampleDefaultInputs.Namespace,
+				Name: "simpleedagrun", Namespace: SampleDefaultInputs.Namespace,
 			}}
 
 			result, err := reconciler.Reconcile(ctx, request)
-			Expect(result.Requeue).To(BeFalse())
-			Expect(result.RequeueAfter).To(BeNil())
 			Expect(err).ToNot(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
 
 			job := batchv1.Job{}
 			expectedjobname := "simpleedagrun-simplestep1"
@@ -100,7 +101,32 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 				},
 				&job,
 			)).To(Succeed())
-
+			compareJobWithEdagStep(*simpleedag, "simplestep1", job)
 		})
 	})
 })
+
+func compareJobWithEdagStep(edag graphv1alpha1.EDAG, stepname string, job batchv1.Job) {
+	jobContainer := job.Spec.Template.Spec.Containers[0]
+	edagstep := edag.Spec.Steps[stepname]
+	completionMode := batchv1.IndexedCompletion
+
+	Expect(jobContainer.Image).To(Equal(edagstep.Image))
+	Expect(job.Spec.Completions).To(Equal(&edagstep.Replicas))
+	Expect(job.Spec.Parallelism).To(Equal(&edagstep.Replicas))
+	Expect(job.Spec.CompletionMode).To(Equal(&completionMode))
+	Expect(jobContainer.Command).To(Equal(edagstep.Command))
+	Expect(jobContainer.Args).To(Equal(edagstep.Args))
+	Expect(job.Spec.Template.Spec.RestartPolicy).To(Equal(corev1.RestartPolicyNever))
+	Expect(jobContainer.Env).To(Equal(convertEnvspec(edagstep.Envs)))
+}
+
+func convertEnvspec(envspec map[string]string) []corev1.EnvVar {
+	envs := []corev1.EnvVar{}
+	for name, value := range envspec {
+		envs = append(envs,
+			corev1.EnvVar{Name: name, Value: value},
+		)
+	}
+	return envs
+}

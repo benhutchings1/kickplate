@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	graphv1alpha1 "github.com/benhutchings1/kickplate/api/v1alpha1"
@@ -54,6 +55,7 @@ func (svc *EDAGRunService) CreateJob(
 		Indexed:       batchv1.IndexedCompletion,
 		RestartPolicy: corev1.RestartPolicyNever,
 		Command:       stepSpec.Command,
+		Args:          stepSpec.Args,
 		UserUUID:      1000,
 		Envs:          envs,
 	}
@@ -226,9 +228,12 @@ func (svc *EDAGRunService) IsRunComplete(run *graphv1alpha1.EDAGRun) bool {
 func (svc *EDAGRunService) FetchEDAG(
 	ctx context.Context,
 	edagNamespacedName types.NamespacedName,
-) (edag *graphv1alpha1.EDAG, err error) {
+) (*graphv1alpha1.EDAG, error) {
 	fetchedEdag := &graphv1alpha1.EDAG{}
-	if found, err := svc.Client.FetchResource(ctx, edagNamespacedName, edag); err != nil || !found {
+	if found, err := svc.Client.FetchResource(ctx, edagNamespacedName, fetchedEdag); err != nil || !found {
+		if !found {
+			err = errors.New("failed retrieve EDAG")
+		}
 		svc.Log.Error(
 			err, "EDAG cannot be retrieved",
 			"namespace", edagNamespacedName.Namespace, "name", edagNamespacedName.Name,
@@ -241,7 +246,7 @@ func (svc *EDAGRunService) FetchEDAG(
 func (svc *EDAGRunService) FetchEDAGRun(
 	ctx context.Context,
 	edagRunNamespacedName types.NamespacedName,
-) (edagrun *graphv1alpha1.EDAGRun, err error) {
+) (*graphv1alpha1.EDAGRun, error) {
 	fetchedEdagrun := &graphv1alpha1.EDAGRun{}
 	if found, err := svc.Client.FetchResource(ctx, edagRunNamespacedName, fetchedEdagrun); err != nil ||
 		!found {

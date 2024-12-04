@@ -14,8 +14,8 @@ import (
 )
 
 var _ = Describe("EDAGRun Controller", Ordered, func() {
-	simpleedag := new(graphv1alpha1.EDAG)
-	simpleedagrun := new(graphv1alpha1.EDAGRun)
+	twostepedag := new(graphv1alpha1.EDAG)
+	twostepedagrun := new(graphv1alpha1.EDAGRun)
 	reconciler := new(controller.EDAGRunReconciler)
 
 	BeforeEach(func() {
@@ -25,10 +25,25 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 		}
 	})
 
+	BeforeAll(func() {
+		By("creating overriding config values")
+		var mockLoadConfigFn = func() (config controller.Config) {
+			return controller.Config{
+				Namespace:      SampleDefaultInputs.Namespace,
+				FinaliserPath:  "graph.kickplate.com/finalizer",
+				DefaultPortpod: 8000,
+				DefaultPodLabels: map[string]string{
+					"label": "default",
+				},
+			}
+		}
+		controller.LoadConfigFn = mockLoadConfigFn
+	})
+
 	Context("resolving a simple EDAG", func() {
 		BeforeAll(func() {
 			By("creating simple edag")
-			simpleedag = &graphv1alpha1.EDAG{
+			twostepedag = &graphv1alpha1.EDAG{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "simpleedag",
 					Namespace: SampleDefaultInputs.Namespace,
@@ -48,10 +63,10 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 					},
 				},
 			}
-			Expect(k8sClient.Create(ctx, simpleedag)).To(Succeed())
+			Expect(k8sClient.Create(ctx, twostepedag)).To(Succeed())
 
 			By("creating edagrun to resolve")
-			simpleedagrun = &graphv1alpha1.EDAGRun{
+			twostepedagrun = &graphv1alpha1.EDAGRun{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "simpleedagrun",
 					Namespace: SampleDefaultInputs.Namespace,
@@ -60,7 +75,7 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 					EDAGName: "simpleedag",
 				},
 			}
-			Expect(k8sClient.Create(ctx, simpleedagrun)).To(Succeed())
+			Expect(k8sClient.Create(ctx, twostepedagrun)).To(Succeed())
 
 			By("creating overriding config values")
 			var mockLoadConfigFn = func() (config controller.Config) {
@@ -78,8 +93,8 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 
 		AfterAll(func() {
 			By("cleaning up simple reconcile test")
-			Expect(k8sClient.Delete(ctx, simpleedag)).To(Succeed())
-			Expect(k8sClient.Delete(ctx, simpleedagrun)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, twostepedag)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, twostepedagrun)).To(Succeed())
 		})
 
 		It("should create jobs for edag with 1 step", func() {
@@ -101,7 +116,101 @@ var _ = Describe("EDAGRun Controller", Ordered, func() {
 				},
 				&job,
 			)).To(Succeed())
-			compareJobWithEdagStep(*simpleedag, "simplestep1", job)
+			compareJobWithEdagStep(*twostepedag, "simplestep1", job)
+		})
+	})
+
+	Context("resolving an EDAG with two parallel steps", func() {
+		BeforeAll(func() {
+			By("creating EDAG with two parallel steps")
+			twostepedag = &graphv1alpha1.EDAG{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "twostepedag",
+					Namespace: SampleDefaultInputs.Namespace,
+				},
+				Spec: graphv1alpha1.EDAGSpec{
+					Steps: map[string]graphv1alpha1.EDAGStep{
+						"step1": {
+							Image:    "image1",
+							Replicas: int32(1),
+							Envs: map[string]string{
+								"step": "1",
+							},
+							Args: []string{
+								"args1", "input1",
+							},
+							Command: []string{
+								"optional", "command1",
+							},
+						},
+						"step2": {
+							Image:    "image2",
+							Replicas: int32(2),
+							Envs: map[string]string{
+								"step": "2",
+							},
+							Args: []string{
+								"args2", "input2",
+							},
+							Command: []string{
+								"optional", "command2",
+							},
+						},
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, twostepedag)).To(Succeed())
+
+			By("creating edagrun to resolve")
+			twostepedagrun = &graphv1alpha1.EDAGRun{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "twostepedagrun",
+					Namespace: SampleDefaultInputs.Namespace,
+				},
+				Spec: graphv1alpha1.EDAGRunSpec{
+					EDAGName: "twostepedag",
+				},
+			}
+			Expect(k8sClient.Create(ctx, twostepedagrun)).To(Succeed())
+		})
+
+		AfterAll(func() {
+			By("cleaning up simple reconcile test")
+			Expect(k8sClient.Delete(ctx, twostepedag)).To(Succeed())
+			Expect(k8sClient.Delete(ctx, twostepedagrun)).To(Succeed())
+		})
+
+		It("should create jobs for edag with two parallel steps", func() {
+			request := reconcile.Request{NamespacedName: types.NamespacedName{
+				Name: "twostepedagrun", Namespace: SampleDefaultInputs.Namespace,
+			}}
+
+			result, err := reconciler.Reconcile(ctx, request)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(result.Requeue).To(BeFalse())
+
+			job1 := new(batchv1.Job)
+			job2 := new(batchv1.Job)
+			expectedjob1name := "twostepedagrun-step1"
+			expectedjob2name := "twostepedagrun-step2"
+
+			Expect(k8sClient.Get(
+				ctx,
+				types.NamespacedName{
+					Name: expectedjob1name, Namespace: SampleDefaultInputs.Namespace,
+				},
+				job1,
+			)).To(Succeed())
+			compareJobWithEdagStep(*twostepedag, "step1", *job1)
+
+			Expect(k8sClient.Get(
+				ctx,
+				types.NamespacedName{
+					Name: expectedjob2name, Namespace: SampleDefaultInputs.Namespace,
+				},
+				job2,
+			)).To(Succeed())
+			compareJobWithEdagStep(*twostepedag, "step2", *job2)
 		})
 	})
 })

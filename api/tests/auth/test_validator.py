@@ -1,9 +1,11 @@
-from auth.token_validator import TokenValidator
-import pytest
 import json
-from typing import cast
+from typing import Any, cast
+
+import pytest
 import requests_mock
-from auth.errors import TokenExpiredError, TokenDecodingError
+
+from auth.errors import TokenDecodingError, TokenExpiredError
+from auth.validator import _TokenValidator
 
 
 @pytest.fixture
@@ -12,25 +14,27 @@ def data_path() -> str:
 
 
 @pytest.fixture
-def valid_token(data_path: str) -> str:
+def valid_token(data_path: str) -> dict[str, str]:
     with open(data_path + "/token.json") as fs:
-        return json.load(fs)
+        return cast(dict[str, str], json.load(fs))
 
 
 @pytest.fixture
-def valid_jwks(data_path: str) -> dict[str, str]:
+def valid_jwks(data_path: str) -> dict[str, Any]:
     with open(data_path + "/jwks.json") as fs:
-        return json.load(fs)
+        return cast(dict[str, str], json.load(fs))
 
 
 @pytest.fixture
-def valid_oidc_config(data_path: str) -> dict[str, str]:
+def valid_oidc_config(data_path: str) -> dict[str, Any]:
     with open(data_path + "/oidc_config.json") as fs:
-        return json.load(fs)
+        return cast(dict[str, str], json.load(fs))
 
 
-def test_should_allow_valid_expired_token(
-    valid_token: str, valid_jwks: dict[str, str], valid_oidc_config: dict[str, str]
+def test_should_allow_valid_token(
+    valid_token: dict[str, str],
+    valid_jwks: dict[str, str],
+    valid_oidc_config: dict[str, str],
 ):
     jwks_url = "https://jwks.com"
     oidc_config_url = "https://oidc.com"
@@ -45,17 +49,18 @@ def test_should_allow_valid_expired_token(
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        TokenValidator().verify_token(
-            token=token,
-            jwks_url=oidc_config_url,
-            audience=audience,
-            issuer=issuer,
-            verify_expiry=False,
-        )
+        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+
+    token_contents = token_validator.decode_verify_token(
+        token,
+        verify_expiry=False,
+    )
 
 
 def test_should_raise_expiry_error(
-    valid_token: str, valid_jwks: dict[str, str], valid_oidc_config: dict[str, str]
+    valid_token: dict[str, str],
+    valid_jwks: dict[str, str],
+    valid_oidc_config: dict[str, str],
 ):
     jwks_url = "https://jwks.com"
     oidc_config_url = "https://oidc.com"
@@ -65,24 +70,23 @@ def test_should_raise_expiry_error(
     audience = valid_token["audience"]
     issuer = valid_token["issuer"]
 
-    # Replace oidc_config url
     with requests_mock.Mocker() as m:
         m = cast(requests_mock.Mocker, m)
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        with pytest.raises(TokenExpiredError) as exc:
-            TokenValidator().verify_token(
-                token=token,
-                jwks_url=oidc_config_url,
-                audience=audience,
-                issuer=issuer,
-                verify_expiry=True,
-            )
+        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+
+    with pytest.raises(TokenExpiredError) as exc:
+        token_contents = token_validator.decode_verify_token(
+            token,
+        )
 
 
 def test_should_raise_error_on_invalid_token(
-    valid_token: str, valid_jwks: dict[str, str], valid_oidc_config: dict[str, str]
+    valid_token: dict[str, str],
+    valid_jwks: dict[str, str],
+    valid_oidc_config: dict[str, str],
 ):
     jwks_url = "https://jwks.com"
     oidc_config_url = "https://oidc.com"
@@ -92,17 +96,41 @@ def test_should_raise_error_on_invalid_token(
     audience = valid_token["audience"]
     issuer = valid_token["issuer"]
 
-    # Replace oidc_config url
     with requests_mock.Mocker() as m:
         m = cast(requests_mock.Mocker, m)
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        with pytest.raises(TokenDecodingError) as exc:
-            TokenValidator().verify_token(
-                token=token,
-                jwks_url=oidc_config_url,
-                audience=audience,
-                issuer=issuer,
-                verify_expiry=True,
-            )
+        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+
+    with pytest.raises(TokenDecodingError) as exc:
+        token_contents = token_validator.decode_verify_token(
+            token,
+        )
+
+
+def test_should_raise_error_on_missing_kid(
+    valid_token: dict[str, str],
+    valid_jwks: dict[str, Any],
+    valid_oidc_config: dict[str, Any],
+):
+    jwks_url = "https://jwks.com"
+    oidc_config_url = "https://oidc.com"
+    valid_oidc_config["jwks_uri"] = jwks_url
+    valid_jwks["keys"] = []
+
+    token = "1fdwf.srfgfbdsg.dsafg=="
+    audience = valid_token["audience"]
+    issuer = valid_token["issuer"]
+
+    with requests_mock.Mocker() as m:
+        m = cast(requests_mock.Mocker, m)
+        m.get(jwks_url, json=valid_jwks)
+        m.get(oidc_config_url, json=valid_oidc_config)
+
+        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+
+    with pytest.raises(TokenDecodingError) as exc:
+        token_contents = token_validator.decode_verify_token(
+            token,
+        )

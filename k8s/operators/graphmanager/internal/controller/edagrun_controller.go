@@ -68,14 +68,13 @@ func (r *EDAGRunReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		Client: &client,
 		Log:    &log,
 	}
-
 	run, err := svc.FetchEDAGRun(ctx, req.NamespacedName)
 	if err != nil {
 		return ctrl.Result{}, nil
 	}
 
 	edagName := types.NamespacedName{
-		Namespace: config.Namespace,
+		Namespace: req.Namespace,
 		Name:      run.Spec.EDAGName,
 	}
 	edag, err := svc.FetchEDAG(ctx, edagName)

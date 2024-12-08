@@ -23,6 +23,7 @@ func TestJobBuilder(t *testing.T) {
 		Indexed:       batchv1.IndexedCompletion,
 		RestartPolicy: corev1.RestartPolicyNever,
 		Command:       []string{"start", "app"},
+		Args:          []string{"run", "env"},
 		UserUUID:      100,
 		Port:          2000,
 		Envs: []corev1.EnvVar{
@@ -49,6 +50,7 @@ func TestJobBuilder(t *testing.T) {
 							Name:            "jb",
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Command:         []string{"start", "app"},
+							Args:            []string{"run", "env"},
 							SecurityContext: &corev1.SecurityContext{
 								RunAsNonRoot:             &[]bool{true}[0],
 								RunAsUser:                &[]int64{100}[0],

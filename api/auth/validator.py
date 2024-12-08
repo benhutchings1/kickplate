@@ -1,5 +1,7 @@
 import base64
+import binascii
 import json
+from typing import Any, cast
 
 import jwt
 import requests
@@ -7,20 +9,24 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 
-from .errors import TokenExpiredError, TokenDecodingError
-
-import binascii
-from .dtos import TokenContents
 from settings import settings
+
+from .errors import InvalidTokenError, TokenDecodingError, TokenExpiredError
+from .models import TokenContents
 
 
 class TokenValidator:
-    def __init__(self) -> None:
-        self.jwks_url = settings.AUTH_JWKS_URL
-        self.audience = settings.AUTH_AUDIENCE
-        self.issuer = settings.AUTH_ISSUER
+    def __init__(self, audience: str, issuer: str, jwks_url: str) -> None:
+        self.jwks = self._fetch_jwks(jwks_url)
+        self._audience = audience
+        self._issuer = issuer
 
-    def verify_token(
+    def _fetch_jwks(self, jwks_url: str) -> dict[str, Any]:
+        pub_config = self.__request_url_contents(jwks_url)
+        jwks_uri = pub_config["jwks_uri"]
+        return self.__request_url_contents(jwks_uri)
+
+    def decode_verify_token(
         self,
         token: str,
         *,
@@ -28,74 +34,61 @@ class TokenValidator:
     ) -> TokenContents:
         try:
             # Get public key
-            __pub_key = self.__get_rsa_key(token, self.jwks_url)
+            __pub_key = self.__get_rsa_key(token)
             # Verify JWT token using public key
-            return jwt.decode(
+            token_contents = jwt.decode(
                 token,
                 __pub_key,
                 verify=True,
                 algorithms=["RS256"],
-                audience=self.audience,
-                issuer=self.issuer,
+                audience=self._audience,
+                issuer=self._issuer,
                 options={"verify_exp": verify_expiry},
             )
+            return TokenContents.model_validate(token_contents)
+
         except jwt.exceptions.ExpiredSignatureError:
             raise TokenExpiredError()
         except (jwt.exceptions.InvalidTokenError, binascii.Error, KeyError):
             raise TokenDecodingError()
 
-    def __get_rsa_key(self, token: str, jwks_url: str) -> RSAPublicNumbers:
+    def __get_rsa_key(self, token: str) -> bytes:
         """Converts public key from token header into RSA key"""
-        # Get headers of JWT token
         unverified_headers = self.__get_jwt_headers(token)
-        # Get key ID from headers
         kid = unverified_headers["kid"]
-        # Get JWKS
-        pub_config = self.__request_url_contents(jwks_url)
-        # Get JWKS
-        jwks_uri = pub_config["jwks_uri"]
-        jwks = self.__request_url_contents(jwks_uri)
-
-        # Find matching KID in public keyset
         jwk_key = None
-        for keyset in jwks["keys"]:
+        for keyset in self.jwks["keys"]:
             if kid == keyset["kid"]:
                 jwk_key = keyset
 
         # No matching KID found, return invalid key
         if jwk_key is None:
-            raise KeyError()
+            raise InvalidTokenError()
 
         # Format public JWK as RSA PEM
-        return self.__rsa_pem_from_jwk(
-            {
-                "kty": jwk_key["kty"],
-                "kid": jwk_key["kid"],
-                "use": jwk_key["use"],
-                "n": jwk_key["n"],
-                "e": jwk_key["e"],
-            }
-        )
+        return self.__rsa_pem_from_jwk(jwk_key)
 
     @staticmethod
     def __get_jwt_headers(jwt_token: str) -> dict[str, str]:
         """Decode unverified JWT header"""
         header = jwt_token.split(".")[0]
-        return json.loads(base64.b64decode(header).decode("utf-8"))
+        return cast(
+            dict[str, str], json.loads(base64.b64decode(header).decode("utf-8"))
+        )
 
     @staticmethod
     def __request_url_contents(url) -> dict[str, str]:
         """Gets JSON response from given URL (Cached)"""
-        return json.loads(requests.get(url).content)
+        return cast(dict[str, str], requests.get(url).json())
 
     @staticmethod
-    def __ensure_bytes(key) -> str:
+    def __ensure_bytes(key: str | bytes) -> bytes:
         """Ensure UTF-8 encoding of string"""
         if isinstance(key, str):
             key = key.encode("utf-8")
         return key
 
-    def __rsa_pem_from_jwk(self, jwk) -> RSAPublicNumbers:
+    def __rsa_pem_from_jwk(self, jwk: dict[str, Any]) -> bytes:
         """Format JWK as RSA Pub Number, PEM format"""
         return (
             RSAPublicNumbers(
@@ -112,3 +105,17 @@ class TokenValidator:
         """Decode from Base64 to int"""
         decoded = base64.urlsafe_b64decode(self.__ensure_bytes(val) + b"==")
         return int.from_bytes(decoded, "big")
+
+
+_token_validator: TokenValidator | None = None
+
+
+def get_token_validator() -> TokenValidator:
+    return cast(TokenValidator, _token_validator)
+
+
+def initialise_token_validator() -> None:
+    global _token_validator
+    _token_validator = TokenValidator(
+        settings.AUTH_AUDIENCE, settings.AUTH_ISSUER, settings.AUTH_OIDC_CONFIG_URL
+    )

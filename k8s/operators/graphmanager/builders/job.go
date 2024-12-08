@@ -16,6 +16,7 @@ type JobBuilder struct {
 	Indexed       batchv1.CompletionMode
 	RestartPolicy corev1.RestartPolicy
 	Command       []string
+	Args          []string
 	UserUUID      int64
 	Port          int32
 	Envs          []corev1.EnvVar
@@ -40,6 +41,7 @@ func (JobInputs *JobBuilder) BuildJob() *batchv1.Job {
 							Name:            JobInputs.Name,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							Command:         JobInputs.Command,
+							Args:            JobInputs.Args,
 							SecurityContext: &corev1.SecurityContext{
 								RunAsNonRoot:             &[]bool{true}[0],
 								RunAsUser:                &[]int64{JobInputs.UserUUID}[0],

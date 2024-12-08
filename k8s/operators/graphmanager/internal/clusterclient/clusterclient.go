@@ -103,7 +103,7 @@ func (client *ClusterClient) SetControllerReference(
 	if err := SetControllerReferenceFn(childObj, parentObj, client.Scheme); err != nil {
 		client.Log.Error(
 			err, "Failed to set controller reference",
-			"ParentObject", parentObj.GetName(), "ChildObject", childObj.GetName(),
+			"parent", parentObj.GetName(), "child", childObj.GetName(),
 		)
 	}
 	if err := client.UpdateResources(ctx, parentObj); err != nil {

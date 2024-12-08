@@ -20,6 +20,7 @@ httpx = "*"
 flake8 = "*"
 requests-mock = "*"
 mock = "*"
+faker = "*"
 
 [requires]
 python_version = "3.10"

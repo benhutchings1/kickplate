@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from auth.error_handlers import include_error_handlers as auth_error_handlers
 
 

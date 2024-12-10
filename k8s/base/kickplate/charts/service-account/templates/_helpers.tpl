@@ -3,13 +3,9 @@
 {{- end -}}
 
 {{- define "role.parser" -}}
-{{- $readerRoles := list "get" "describe" "list" "watch" -}}
-{{- $contributorRoles := list "get" "describe" "list" "watch" "create" "patch" "update" -}}
-{{- $ownerRoles := list "get" "describe" "list" "watch" "create" "patch" "update" "delete" "deleteCollection" -}}
+{{- $readerRoles := list "get" "list" "watch"  -}}
+{{- $contributorRoles := list "get" "list" "watch" "create" "patch" "update" -}}
+{{- $ownerRoles := list "get" "list" "watch" "create" "patch" "update" "delete" "deleteCollection" -}}
 {{- $roleMap := dict "reader" $readerRoles "contributor" $contributorRoles "owner" $ownerRoles -}}
-{{- if not (eq .verbs nil) -}}
-{{ .verbs }}
-{{- else -}}
-{{ index $roleMap .role }}
-{{- end -}}
+{{- index $roleMap .role | toYaml | nindent 6 -}}
 {{- end -}}

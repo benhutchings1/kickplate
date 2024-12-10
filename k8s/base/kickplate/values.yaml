@@ -5,9 +5,6 @@ global:
   commonLabels:
     app: kickplate
 
-bases:
-  should_deploy: false
-
 namespaces:
   should_deploy: true
   names:
@@ -80,7 +77,7 @@ OAuthProxy:
   port: 5000
 
 service-account:
-  should_deploy: false
+  should_deploy: true
   serviceAccounts:
     - name: sa-api
       giveRoles: ["ExecutionGraphReader"]

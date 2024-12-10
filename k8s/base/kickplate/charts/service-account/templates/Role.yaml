@@ -13,9 +13,9 @@ metadata:
     {{ $role.labels | toYaml }}
     {{- end }}
 rules:
-  - resources: {{ $role.resources }}
-    apiGroups: {{ $role.apiGroups }}
-    verbs: {{ include "role.parser" $role }}
+  - resources: {{ $role.resources | toYaml | nindent 4 }}
+    apiGroups: {{ $role.apiGroups | toYaml | nindent 4 }}
+    verbs: {{- include "role.parser" $role | }}
 ---
 {{- end -}}
 {{- end -}}

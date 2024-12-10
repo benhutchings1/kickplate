@@ -1,16 +1,17 @@
 from pydantic import BaseModel, Field
-from typing import List
 
 
-class EDAGStep(BaseModel):
+class EDAGRequestStep(BaseModel):
     stepname: str = Field(
         description="Name of step identify, must be unique in the graph"
     )
     image: str = Field(description="Docker image to run on step")
     replicas: int = Field(
-        description="Number of container replicas to run on step", min=1, default=1
+        description="Number of container replicas to run on step",
+        min_length=1,
+        default=1,
     )
-    dependencies: List[str] = Field(
+    dependencies: list[str] = Field(
         description="Steps dependent on, will fail if a dependency fails", default=[]
     )
     env: dict[str, str] = Field(
@@ -18,13 +19,13 @@ class EDAGStep(BaseModel):
             in this step",
         default={},
     )
-    args: List[str] = Field(description="Arguments for running", default=[])
-    command: List[str] = Field(description="Commands to run on startup", default=[])
+    args: list[str] = Field(description="Arguments for running", default=[])
+    command: list[str] = Field(description="Commands to run on startup", default=[])
 
 
-class EDAG(BaseModel):
+class EDAGRequest(BaseModel):
     graphname: str = Field(description="Name of graph, must be unique")
-    steps: List[EDAGStep] = Field(description="Steps to execute", min_length=1)
+    steps: list[EDAGRequestStep] = Field(description="Steps to execute", min_length=1)
 
 
 class RunGraphParameters(BaseModel):
@@ -32,7 +33,7 @@ class RunGraphParameters(BaseModel):
 
 
 class RunGraphDetails(BaseModel):
-    _id: str
+    id: str
 
 
 class StepStatus(BaseModel):
@@ -48,4 +49,4 @@ class GraphStatusDetails(BaseModel):
     completed_time: str
     phase: str
     creation_time: str
-    steps_status: List[StepStatus]
+    steps_status: list[StepStatus]

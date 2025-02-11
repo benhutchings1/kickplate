@@ -9,6 +9,7 @@ kubernetes = "*"
 kubernetes-asyncio = "*"
 cryptography = "*"
 pyjwt = {extras = ["crypto"], version = "*"}
+kr8s = "*"
 
 [dev-packages]
 isort = "*"

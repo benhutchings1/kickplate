@@ -2,27 +2,36 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from entity_builders.edag import EDAGBuilder
+from entity_builders.edagrun import EDAGRunBuilder
 from external.kubernetes import KubernetesClient
 
-from .models import EDAGRequest, GraphStatusDetails, RunGraphDetails, RunGraphParameters
+from models.edag import EDAGRequest
+from models.status import GraphStatusDetails
+from models.edagrun import EDAGRunResource, EDAGRunResponse
 
 
 class EDAGServices:
     def __init__(
-        self, kubernetes_client: Annotated[KubernetesClient, Depends()]
+        self,
+        kubernetes_client: Annotated[KubernetesClient, Depends()],
+        edag_builder: Annotated[EDAGBuilder, Depends()],
+        edag_run_builder: Annotated[EDAGRunBuilder, Depends()],
     ) -> None:
         self._kubernetes_client = kubernetes_client
+        self._edag_builder = edag_builder
+        self._edag_run_builder = edag_run_builder
 
-    @staticmethod
-    async def create_edag(graph_name: str, graph: EDAGRequest) -> EDAGRequest:
-        pass
+    async def create_edag(self, graph_name: str, edag_request: EDAGRequest) -> None:
+        edag_resource = self._edag_builder.build_resource(edag_request)
+        await self._kubernetes_client.create_resource(self._edag_builder, edag_resource)
 
-    @staticmethod
-    async def run_edag(
-        graph_name: str, run_parameters: RunGraphParameters
-    ) -> RunGraphDetails:
-        pass
+    async def run_edag(self, edag_name: str) -> EDAGRunResponse:
+        edag_run_resource = EDAGRunResource(edagname=edag_name)
+        edag_run_manifest = await self._kubernetes_client.create_resource(
+            self._edag_run_builder, edag_run_resource
+        )
+        return EDAGRunResponse(id=edag_run_manifest["metadata"]["name"])
 
-    @staticmethod
-    async def get_edag_status(graph_name: str) -> GraphStatusDetails:
-        pass
+    async def get_edag_status(self, graph_name: str) -> GraphStatusDetails:
+        raise NotImplementedError

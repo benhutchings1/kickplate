@@ -1,14 +1,19 @@
-from pydantic import BaseModel, Field
+from entity_builders.base import BaseResource, BaseRequest
+from pydantic import Field
 
 
-class EDAGRequestStep(BaseModel):
+EDAG_KIND = "EDAG"
+EDAG_API_VERSION = "kickplate.com/v1alpha1"
+
+
+class EDAGRequestStep(BaseRequest):
     stepname: str = Field(
         description="Name of step identify, must be unique in the graph"
     )
     image: str = Field(description="Docker image to run on step")
     replicas: int = Field(
         description="Number of container replicas to run on step",
-        min_length=1,
+        ge=1,
         default=1,
     )
     dependencies: list[str] = Field(
@@ -23,30 +28,21 @@ class EDAGRequestStep(BaseModel):
     command: list[str] = Field(description="Commands to run on startup", default=[])
 
 
-class EDAGRequest(BaseModel):
+class EDAGRequest(BaseRequest):
     graphname: str = Field(description="Name of graph, must be unique")
     steps: list[EDAGRequestStep] = Field(description="Steps to execute", min_length=1)
 
 
-class RunGraphParameters(BaseModel):
-    pass
+class EDAGStepResource(BaseResource):
+    stepname: str
+    image: str
+    replicas: int
+    dependencies: list[str]
+    env: dict[str, str]
+    args: list[str]
+    command: list[str]
 
 
-class RunGraphDetails(BaseModel):
-    id: str
-
-
-class StepStatus(BaseModel):
-    name: str
-    state: str
-    start_time: str
-    finish_time: str
-    error_message: str
-
-
-class GraphStatusDetails(BaseModel):
+class EDAGResource(BaseResource):
     graphname: str
-    completed_time: str
-    phase: str
-    creation_time: str
-    steps_status: list[StepStatus]
+    steps: list[EDAGStepResource]

@@ -1,40 +1,31 @@
-from kubernetes_asyncio import client
-from settings import settings
+from typing import Annotated, Any, cast
+import kr8s
+from kr8s.asyncio.objects import APIObject
+
+from entity_builders.base import BaseEntityBuilder
+from models.base import BaseResource
+from fastapi import Depends
+
+_NAMESPACE = "default"
+
+
+def _get_api() -> kr8s.Api:
+    return kr8s.api()
 
 
 class KubernetesClient:
-    async def __init__(self) -> None:
-        self.cluster_config = client.Configuration()
-        self.cluster_config.host = settings.CLUSTER_HOST
-        self.cluster_config.ssl_ca_cert = settings.CLUSTER_CERTIFICATE_PATH
-        self.cluster_config.api_key = {
-            "authorization": "Bearer " + settings.CLUSTER_SERVICE_ACCOUNT_SECRET
-        }
-        self.cluster_client = client.ApiClient(self.cluster_config)
+    def __init__(self, api: Annotated[kr8s.Api, Depends(_get_api)]) -> None:
+        self._client = api
 
     async def create_resource(
-        self,
-        group: str,
-        version: str,
-        namespace: str,
-        plural: str,
-        body: str,
-    ):
-        await client.CustomObjectsApi(self.cluster_client).create_namespaced_custom_object(
-            group=group,
-            version=version,
-            namespace=namespace,
-            plural=plural,
-            body=body,
-        )
+        self, resource_builder: BaseEntityBuilder, resource: BaseResource
+    ) -> dict[str, Any]:
+        manifest = resource_builder.build_manifest(resource, _NAMESPACE)
+        manifest.api = self._client
+        await manifest.create()
+        return cast(dict[str, Any], manifest.raw)
 
     async def get_resource(
-        self, name: str, group: str, version: str, namespace: str, plural: str
-    ):
-        return await client.CustomObjectsApi(self.cluster_client).get_namespaced_custom_object(
-            group=group,
-            version=version,
-            namespace=namespace,
-            plural=plural,
-            name=name,
-        )
+        self, resource_builder: BaseEntityBuilder, name: str
+    ) -> APIObject:
+        return await resource_builder.get_crd().get(name, namespace=_NAMESPACE)

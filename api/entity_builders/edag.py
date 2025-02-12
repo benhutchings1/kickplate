@@ -1,13 +1,10 @@
 from typing import Any
-from entity_builders.base import BaseEntityBuilder
-from models.edag import (
-    EDAG_API_VERSION,
-    EDAG_KIND,
-    EDAGRequest,
-    EDAGResource,
-    EDAGStepResource,
-)
+
 from kr8s.asyncio.objects import APIObject, new_class
+
+from entity_builders.base import BaseEntityBuilder
+from models.edag import (EDAG_API_VERSION, EDAG_KIND, EDAGRequest,
+                         EDAGResource, EDAGStepResource)
 
 
 class EDAGBuilder(BaseEntityBuilder):

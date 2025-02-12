@@ -3,11 +3,11 @@ from typing import Annotated, cast
 from fastapi import APIRouter, Body, Depends, Path
 from fastapi.security import OAuth2AuthorizationCodeBearer
 
+from models.edag import EDAGRequest
+from models.edagrun import EDAGRunResponse
+from models.status import GraphStatusDetails
 from settings import settings
 
-from models.edag import EDAGRequest
-from models.status import GraphStatusDetails
-from models.edagrun import EDAGRunResponse
 from .services import EDAGServices
 
 router = APIRouter(

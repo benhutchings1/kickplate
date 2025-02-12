@@ -1,13 +1,14 @@
 from typing import Any
-from unittest.mock import AsyncMock, AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
+from kr8s import Api
+from kr8s.asyncio.objects import APIObject
 
 from entity_builders.edag import EDAGBuilder
 from external.kubernetes import _NAMESPACE, KubernetesClient
-from kr8s import Api
-from kr8s.asyncio.objects import APIObject
-from models.edag import EDAGRequest, EDAGRequestStep, EDAGResource, EDAGStepResource
+from models.edag import (EDAGRequest, EDAGRequestStep, EDAGResource,
+                         EDAGStepResource)
 
 pytestmark = pytest.mark.asyncio
 

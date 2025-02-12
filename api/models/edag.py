@@ -1,9 +1,9 @@
-from entity_builders.base import BaseResource, BaseRequest
 from pydantic import Field
 
+from entity_builders.base import BaseRequest, BaseResource
 
 EDAG_KIND = "EDAG"
-EDAG_API_VERSION = "kickplate.com/v1alpha1"
+EDAG_API_VERSION = "edag.kickplate.com/v1alpha1"
 
 
 class EDAGRequestStep(BaseRequest):

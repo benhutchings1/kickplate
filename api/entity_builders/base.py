@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from kr8s.asyncio.objects import APIObject
 
+from kr8s.asyncio.objects import APIObject
 
 from models.base import BaseRequest, BaseResource
 

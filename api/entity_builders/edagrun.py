@@ -1,14 +1,12 @@
-from kr8s.asyncio.objects import APIObject, new_class
-from entity_builders.base import BaseEntityBuilder
-from models.base import BaseRequest
-from models.edagrun import (
-    EDAG_RUN_API_VERSION,
-    EDAG_RUN_KIND,
-    EDAGRunRequest,
-    EDAGRunResource,
-)
 import random
 from string import ascii_lowercase, digits
+
+from kr8s.asyncio.objects import APIObject, new_class
+
+from entity_builders.base import BaseEntityBuilder
+from models.base import BaseRequest
+from models.edag import EDAG_API_VERSION, EDAG_KIND
+from models.edagrun import EDAG_RUN_API_VERSION, EDAG_RUN_KIND, EDAGRunResource
 
 _GENERATED_SUFFIX_LENGTH = 8
 
@@ -26,6 +24,14 @@ class EDAGRunBuilder(BaseEntityBuilder):
                 "metadata": {
                     "name": self._generate_edagrun_name(resource.edagname),
                     "namespace": namespace,
+                    "ownerReferences": [
+                        {
+                            "apiVersion": EDAG_API_VERSION,
+                            "kind": EDAG_KIND,
+                            "name": resource.edagname,
+                            "uid": resource.edag_uid,
+                        }
+                    ],
                 },
                 "spec": {"edagname": resource.edagname},
             }

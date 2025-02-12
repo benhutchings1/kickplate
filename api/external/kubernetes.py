@@ -1,15 +1,17 @@
 from typing import Annotated, Any, cast
+
 import kr8s
+from fastapi import Depends
 from kr8s.asyncio.objects import APIObject
 
 from entity_builders.base import BaseEntityBuilder
 from models.base import BaseResource
-from fastapi import Depends
 
 _NAMESPACE = "default"
 
 
 def _get_api() -> kr8s.Api:
+    """Wrap factory to stop parameters leaking through dependency injection to api route"""
     return kr8s.api()
 
 

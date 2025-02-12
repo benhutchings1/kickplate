@@ -1,13 +1,12 @@
 from unittest.mock import Mock, patch
 
-from fastapi.security import SecurityScopes
 import pytest
+from faker import Faker
+from fastapi.security import SecurityScopes
 
 from auth.errors import InsufficientPermissionsError
-from auth.models import TokenContents, Roles, Scopes, User
+from auth.models import Roles, Scopes, TokenContents, User
 from auth.security import OAuth, RBACSecurity
-
-from faker import Faker
 
 fake = Faker()
 

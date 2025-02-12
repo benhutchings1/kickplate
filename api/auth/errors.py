@@ -1,6 +1,3 @@
-from typing import list
-
-
 class AuthenticationErrors(Exception):
     """Parent class for all API auth errors"""
 

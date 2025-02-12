@@ -22,12 +22,12 @@ paths:
       responses:
         '200':
           description: Healthy
-  /api/v1/{EDAGname}:
+  /api/v1/graph/{edag_name}:
     post:
       tags:
         - EDAG
       parameters:
-        - name: EDAGname
+        - name: edag_name
           in: path
           description: new name of EDAG
           schema:
@@ -46,7 +46,7 @@ paths:
         '200':
           description: Successful operation
         '409':
-          description: EDAGname already exists
+          description: edag_name already exists
           content:
             application/json:
               schema:
@@ -76,7 +76,7 @@ paths:
       tags:
         - EDAG
       parameters:
-          - name: EDAGname
+          - name: edag_name
             in: path
             description: name of existing EDAG
             schema:
@@ -117,7 +117,7 @@ paths:
       tags:
         - EDAG
       parameters:
-          - name: EDAGname
+          - name: edag_name
             in: path
             description: name of EDAG
             schema:
@@ -147,7 +147,7 @@ paths:
       tags:
         - EDAG
       parameters:
-          - name: EDAGname
+          - name: edag_name
             in: path
             description: name of EDAG
             schema:
@@ -169,12 +169,12 @@ paths:
       security:
         - kickplate_auth:
             - read:EDAG
-  /api/v1/{EDAGname}/run:
+  /api/v1/graph/{edag_name}/run:
     post:
       tags:
           - EDAG Execution
       parameters:
-        - name: EDAGname
+        - name: edag_name
           in: path
           description: name of EDAG
           schema:
@@ -190,7 +190,7 @@ paths:
             schema:
               type: object
               properties:
-                EDAGname:
+                edag_name:
                   type: string
                   example: myEDAG
                 RunParameters:
@@ -214,12 +214,12 @@ paths:
         - kickplate_auth:
             - run:EDAG
             - read:EDAG
-  /api/v1/{EDAGRunID}/run:
+  /api/v1/graph/{edag_run_id}/run:
     get:
       tags:
           - EDAG Execution
       parameters:
-        - name: EDAGRunID
+        - name: edag_run_id
           in: path
           description: ID of EDAG Run
           schema:

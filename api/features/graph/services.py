@@ -84,9 +84,6 @@ class EDAGServices:
                 return None
             raise UndeterminedApiError() from exc
 
-    async def get_edag_status(self, graph_name: str) -> GraphStatusDetails:
-        raise NotImplementedError
-
     def _try_get_status_code(self, exc: ServerError) -> int:
         if exc.response is not None:
             return exc.response.status_code

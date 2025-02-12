@@ -57,4 +57,4 @@ See API documentation as an entrypoint to the platform.
 
 ## Further Documentation
 - [Architecture]("./docs/architecture.md)
-- [Front End Design]("./docs/web-design.md")
+- [Front End Design]("./docs/dashboard-design.md")

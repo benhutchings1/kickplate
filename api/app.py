@@ -16,12 +16,10 @@ logger = logging.Logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> Any:
+def lifespan(app: FastAPI) -> Any:
     logger.info("Fetching OIDC config...")
     initialise_token_validator()
     logger.info("...Fetched OIDC config")
-
-    yield
 
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
@@ -30,7 +28,6 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 )
 
 app = FastAPI(
-    lifespan=lifespan,
     swagger_ui_init_oauth={
         "clientId": settings.AUTH_CLIENT_ID,
         "scopes": "",
@@ -43,6 +40,5 @@ add_error_handlers(app)
 app.include_router(health_router)
 app.include_router(graph_router)
 
-if __name__ == "__main__":
-    if settings.DEBUG_MODE:
-        uvicorn.run("app:app", host="localhost", port=8080, reload=True)
+if __name__ == "__main__" and settings.DEBUG_MODE:
+    uvicorn.run("app:app", host="localhost", port=8080, reload=True)

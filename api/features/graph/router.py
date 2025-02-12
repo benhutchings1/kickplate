@@ -24,41 +24,15 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 
 
 @router.post(
-    "/{edag_name}",
+    "/",
     tags=[_EDAG_TAG],
     description="Create new EDAG",
 )
 async def create_edag(
-    edag_name: Annotated[str, Path()],
-    graph: Annotated[EDAGRequest, Body()],
-    graph_services: Annotated[EDAGServices, Depends()],
+    edag_request: Annotated[EDAGRequest, Body()],
+    edag_services: Annotated[EDAGServices, Depends()],
 ) -> None:
-    await graph_services.create_edag(edag_name, graph)
-
-
-@router.put("/{edag_name}", tags=[_EDAG_TAG], description="Update an existing EDAG")
-async def update_edag(
-    edag_name: Annotated[str, Path()],
-    updated_graph: Annotated[EDAGRequest, Body()],
-    graph_services: Annotated[EDAGServices, Depends()],
-) -> EDAGRequest:
-    raise NotImplementedError()
-
-
-@router.get("/{edag_name}", tags=[_EDAG_TAG], description="Fetch an existing EDAG")
-async def get_edag(
-    edag_name: Annotated[str, Path()],
-    graph_services: Annotated[EDAGServices, Depends()],
-) -> EDAGRequest:
-    raise NotImplementedError()
-
-
-@router.delete("/{edag_name}", tags=[_EDAG_TAG], description="Delete an existing EDAG")
-async def delete_edag(
-    edag_name: Annotated[str, Path()],
-    graph_services: Annotated[EDAGServices, Depends()],
-) -> EDAGRequest:
-    raise NotImplementedError()
+    await edag_services.create_edag(edag_request)
 
 
 @router.post(

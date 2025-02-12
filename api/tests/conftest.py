@@ -1,13 +1,31 @@
-from typing import Any, AsyncGenerator, Iterable
+from typing import Any, AsyncGenerator, Generator, Iterable
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app import app
-from models.edag import (EDAG_API_VERSION, EDAG_KIND, EDAGRequest,
-                         EDAGRequestStep, EDAGResource, EDAGStepResource)
-from models.edagrun import EDAG_RUN_API_VERSION, EDAG_RUN_KIND, EDAGRunResource
+from models.edag import (
+    EDAG_API_VERSION,
+    EDAG_KIND,
+    EDAGRequest,
+    EDAGRequestStep,
+    EDAGResource,
+    EDAGStepResource,
+)
+from models.edagrun import (
+    EDAG_RUN_API_VERSION,
+    EDAG_RUN_KIND,
+    EDAGRunResource,
+    EDAGRunResponse,
+)
+
+
+@pytest.fixture(autouse=True)
+def reset_override_dependencies() -> Generator[None, None, None]:
+    original_overrides = app.dependency_overrides
+    yield
+    app.dependency_overrides = original_overrides
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -113,3 +131,8 @@ def edag_run_manifest() -> dict[str, Any]:
         "apiVersion": EDAG_RUN_API_VERSION,
         "spec": {"edagname": "myedag"},
     }
+
+
+@pytest.fixture
+def edag_run_response() -> EDAGRunResponse:
+    return EDAGRunResponse(id="myedag-fusngoh")

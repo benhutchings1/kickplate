@@ -1,22 +1,23 @@
 import os
 
-from pydantic import BaseModel
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
-class Settings(BaseModel):
+class Settings(BaseSettings):
 
-    DEBUG_MODE: bool = os.environ["DEBUG_MODE"] == "true"
-    CLUSTER_HOST: str = os.environ["CLUSTER_HOST"]
-    CLUSTER_SERVICE_ACCOUNT_SECRET: str = os.environ["CLUSTER_SERVICE_ACCOUNT_SECRET"]
-    CLUSTER_CERTIFICATE_PATH: str = os.environ["CLUSTER_CERTIFICATE_PATH"]
+    DEBUG_MODE: bool = Field()
+    CLUSTER_HOST: str = Field()
+    CLUSTER_SERVICE_ACCOUNT_SECRET: str = Field()
+    CLUSTER_CERTIFICATE_PATH: str = Field(default="certs/ca.crt")
 
-    AUTH_TOKEN_URL: str = os.environ["AUTH_TOKEN_URL"]
-    AUTH_AUTH_URL: str = os.environ["AUTH_AUTH_URL"]
-    AUTH_OIDC_CONFIG_URL: str = os.environ["AUTH_OIDC_CONFIG_URL"]
-    AUTH_ISSUER: str = os.environ["AUTH_ISSUER"]
-    AUTH_AUDIENCE: str = os.environ["AUTH_AUDIENCE"]
+    AUTH_TOKEN_URL: str = Field()
+    AUTH_AUTH_URL: str = Field()
+    AUTH_OIDC_CONFIG_URL: str = Field()
+    AUTH_ISSUER: str = Field()
+    AUTH_AUDIENCE: str = Field()
     AUTH_REQUIRED_ROLES: list[str] = os.environ["AUTH_REQUIRED_ROLES"].split(",")
-    AUTH_CLIENT_ID: str = os.environ["AUTH_CLIENT_ID"]
+    AUTH_CLIENT_ID: str = Field()
 
 
 settings = Settings()

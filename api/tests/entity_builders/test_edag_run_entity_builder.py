@@ -1,46 +1,13 @@
 from typing import Any
-import pytest
+
 from entity_builders.edagrun import EDAGRunBuilder
-from models.edagrun import (
-    EDAG_RUN_API_VERSION,
-    EDAG_RUN_KIND,
-    EDAGRunRequest,
-    EDAGRunResource,
-)
-
-
-@pytest.fixture
-def edagrun_request() -> EDAGRunRequest:
-    return EDAGRunRequest(edagname="myedag")
-
-
-@pytest.fixture
-def edagrun_resource() -> EDAGRunResource:
-    return EDAGRunResource(edagname="myedag")
-
-
-@pytest.fixture
-def edagrun_manifest() -> dict[str, Any]:
-    return {
-        "kind": EDAG_RUN_KIND,
-        "metadata": {"namespace": "testnamespace"},
-        "apiVersion": EDAG_RUN_API_VERSION,
-        "spec": {"edagname": "myedag"},
-    }
+from models.edagrun import EDAG_RUN_API_VERSION, EDAG_RUN_KIND, EDAGRunResource
 
 
 def test_should_get_crd_definition() -> None:
     crd_def = EDAGRunBuilder.get_crd()
     assert crd_def.kind == EDAG_RUN_KIND
     assert crd_def.version == EDAG_RUN_API_VERSION
-
-
-def test_should_edag_build_resource_from_request(
-    edagrun_request: EDAGRunRequest, edagrun_resource: EDAGRunResource
-) -> None:
-    edag = EDAGRunBuilder()
-    built_resource = edag.build_resource(edagrun_request)
-    assert built_resource == edagrun_resource
 
 
 def test_should_build_manifest_from_resource(

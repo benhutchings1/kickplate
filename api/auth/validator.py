@@ -12,7 +12,7 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from settings import settings
 
 from .errors import InvalidTokenError, TokenDecodingError, TokenExpiredError
-from .models import TokenContents
+from models.auth import TokenContents
 
 
 class TokenValidator:

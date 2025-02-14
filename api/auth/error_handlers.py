@@ -2,8 +2,12 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
 
-from .errors import (InsufficientPermissionsError, InvalidTokenError,
-                     TokenDecodingError, TokenExpiredError)
+from .errors import (
+    InsufficientPermissionsError,
+    InvalidTokenError,
+    TokenDecodingError,
+    TokenExpiredError,
+)
 
 
 def include_error_handlers(app: FastAPI) -> None:

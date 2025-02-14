@@ -14,11 +14,6 @@ from models.edagrun import EDAGRunResponse
 pytestmark = pytest.mark.asyncio
 
 
-async def test_health_check(async_client: AsyncClient) -> None:
-    resp = await async_client.get("/health")
-    assert resp.status_code == 200
-
-
 async def test_create_edag(
     async_client: AsyncClient, edag_request: EDAGRequest
 ) -> None:

@@ -12,27 +12,24 @@ from features.graph.router import router as graph_router
 from features.health.router import router as health_router
 from settings import settings
 
-logger = logging.Logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-def lifespan(app: FastAPI) -> Any:
+async def lifespan(app: FastAPI) -> Any:
     logger.info("Fetching OIDC config...")
     initialise_token_validator()
     logger.info("...Fetched OIDC config")
+    yield
 
-
-oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl=settings.AUTH_AUTH_URL,
-    tokenUrl=settings.AUTH_TOKEN_URL,
-)
 
 app = FastAPI(
+    lifespan=lifespan,
     swagger_ui_init_oauth={
         "clientId": settings.AUTH_CLIENT_ID,
-        "scopes": "",
+        "scopes": "openid profile email",
         "appName": "Kickplate API",
-        "userPkceWithAuthorizationCodeGrant": True,
+        "usePkceWithAuthorizationCodeGrant": True,
     },
 )
 

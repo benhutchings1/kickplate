@@ -13,17 +13,10 @@ class TokenExpiredError(AuthenticationErrors):
 class InsufficientPermissionsError(AuthenticationErrors):
     """User doesn't have required permissions to access route"""
 
-    def __init__(self, missing_roles: list[str], missing_scopes: list[str]) -> None:
-        err_msg = "Missing required permissions to perform this action, "
-        if len(missing_roles) > 0:
-            err_msg += f"missing roles: {missing_roles} "
-
-        if len(missing_scopes) > 0:
-            err_msg += f"missing scopes: {missing_scopes}"
-
-        super().__init__(err_msg)
+    def __init__(self, missing_roles: list[str]) -> None:
+        err_msg = f"Insufficient permissions to perform this action, missing roles: {missing_roles}"
         self.missing_roles = missing_roles
-        self.missing_scopes = missing_scopes
+        super().__init__(err_msg)
 
 
 class TokenDecodingError(AuthenticationErrors):

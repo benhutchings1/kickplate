@@ -1,10 +1,13 @@
-from typing import Any, AsyncGenerator, Generator, Iterable
+import json
+from typing import Any, AsyncGenerator, Generator, Iterable, cast
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 
 from app import app
+from auth.security import RBACSecurity
+from models.auth import Role, User
 from models.edag import (
     EDAG_API_VERSION,
     EDAG_KIND,
@@ -28,8 +31,26 @@ def reset_override_dependencies() -> Generator[None, None, None]:
     app.dependency_overrides = original_overrides
 
 
+@pytest.fixture()
+def mock_user(valid_token: dict[str, str]) -> User:
+    return User(
+        email="testuser@email.com",
+        roles=[Role.KICKPLATE_USER],
+        token=valid_token["token"],
+    )
+
+
+@pytest_asyncio.fixture()
+async def async_client(mock_user: User) -> AsyncGenerator[Any, Iterable[AsyncClient]]:
+    app.dependency_overrides[RBACSecurity.verify] = lambda: mock_user
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as client:
+        yield client
+
+
 @pytest_asyncio.fixture(scope="session")
-async def async_client() -> AsyncGenerator[Any, Iterable[AsyncClient]]:
+async def auth_async_client() -> AsyncGenerator[Any, Iterable[AsyncClient]]:
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"
     ) as client:
@@ -136,3 +157,26 @@ def edag_run_manifest() -> dict[str, Any]:
 @pytest.fixture
 def edag_run_response() -> EDAGRunResponse:
     return EDAGRunResponse(id="myedag-fusngoh")
+
+
+@pytest.fixture()
+def data_path() -> str:
+    return "tests/auth/data"
+
+
+@pytest.fixture()
+def valid_token(data_path: str) -> dict[str, str]:
+    with open(data_path + "/token.json") as fs:
+        return cast(dict[str, str], json.load(fs))
+
+
+@pytest.fixture
+def valid_jwks(data_path: str) -> dict[str, Any]:
+    with open(data_path + "/jwks.json") as fs:
+        return cast(dict[str, str], json.load(fs))
+
+
+@pytest.fixture
+def valid_oidc_config(data_path: str) -> dict[str, Any]:
+    with open(data_path + "/oidc_config.json") as fs:
+        return cast(dict[str, str], json.load(fs))

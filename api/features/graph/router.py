@@ -1,26 +1,18 @@
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Body, Depends, Path
-from fastapi.security import OAuth2AuthorizationCodeBearer
+from fastapi import APIRouter, Body, Depends, Path, Security
+from fastapi.responses import JSONResponse
 
+from auth.security import RBACSecurity
+from models.auth import Role, User
 from models.edag import EDAGRequest
 from models.edagrun import EDAGRunResponse
-from models.status import GraphStatusDetails
-from settings import settings
-
 from .services import EDAGServices
 
-router = APIRouter(
-    prefix="/api/v1/edag",
-)
+router = APIRouter(prefix="/api/v1/edag")
 
 _EDAG_TAG = "EDAG"
 _EDAG_EXECUTION_TAG = "EDAG Execution"
-
-oauth2_scheme = OAuth2AuthorizationCodeBearer(
-    authorizationUrl=settings.AUTH_AUTH_URL,
-    tokenUrl=settings.AUTH_TOKEN_URL,
-)
 
 
 @router.post(
@@ -31,6 +23,7 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
 async def create_edag(
     edag_request: Annotated[EDAGRequest, Body()],
     edag_services: Annotated[EDAGServices, Depends()],
+    _user: Annotated[User, Security(RBACSecurity.verify)],
 ) -> None:
     await edag_services.create_edag(edag_request)
 
@@ -41,19 +34,22 @@ async def create_edag(
 async def run_edag(
     edagname: Annotated[str, Path()],
     graph_services: Annotated[EDAGServices, Depends()],
+    _user: Annotated[User, Security(RBACSecurity.verify)],
 ) -> EDAGRunResponse:
     run_response = await graph_services.run_edag(edagname)
     return cast(EDAGRunResponse, run_response)
 
 
-@router.get(
-    "/{run_id}/run",
-    tags=[_EDAG_EXECUTION_TAG],
-    description="Get the status of an existing EDAG run",
+@router.delete(
+    "/{edagname}",
+    tags=[_EDAG_TAG],
+    description="Delete an EDAG and all associated runs. Admin only",
 )
-async def get_edag_status(
-    run_id: Annotated[str, Path()],
-    graph_services: Annotated[EDAGServices, Depends()],
-) -> GraphStatusDetails:
-    status = await graph_services.get_edag_status(run_id)
-    return cast(GraphStatusDetails, status)
+async def delete_edag(
+    edagname: Annotated[str, Path()],
+    _user: Annotated[
+        User, Security(RBACSecurity.verify, scopes=[Role.KICKPLATE_ADMIN])
+    ],
+) -> JSONResponse:
+    """Non functional, used for test for admin role"""
+    return JSONResponse(status_code=500, content="Endpoint not implemented")

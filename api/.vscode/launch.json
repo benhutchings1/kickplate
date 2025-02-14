@@ -11,7 +11,9 @@
         {
             "args": [
                 "app:app",
-                "--reload"
+                "--reload",
+                "--port=8080",
+                "--host=localhost"
             ],
             "envFile": "${workspaceFolder}/.env",
             "jinja": true,

@@ -56,5 +56,5 @@ This EDAG describes a step called `step1` which runs `3 replicas` of the latest 
 See API documentation as an entrypoint to the platform.
 
 ## Further Documentation
-- [Architecture]("./docs/architecture.md)
-- [Front End Design]("./docs/web-design.md")
+- [Architecture](./docs/architecture.md)
+- [Front End Design](./docs/dashboard-design.md)

@@ -4,6 +4,7 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.security import OAuth2AuthorizationCodeBearer
 
 from auth.validator import initialise_token_validator
 from error_handling import add_error_handlers

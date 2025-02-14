@@ -5,30 +5,7 @@ import pytest
 import requests_mock
 
 from auth.errors import TokenDecodingError, TokenExpiredError
-from auth.validator import _TokenValidator
-
-
-@pytest.fixture
-def data_path() -> str:
-    return "tests/auth/data"
-
-
-@pytest.fixture
-def valid_token(data_path: str) -> dict[str, str]:
-    with open(data_path + "/token.json") as fs:
-        return cast(dict[str, str], json.load(fs))
-
-
-@pytest.fixture
-def valid_jwks(data_path: str) -> dict[str, Any]:
-    with open(data_path + "/jwks.json") as fs:
-        return cast(dict[str, str], json.load(fs))
-
-
-@pytest.fixture
-def valid_oidc_config(data_path: str) -> dict[str, Any]:
-    with open(data_path + "/oidc_config.json") as fs:
-        return cast(dict[str, str], json.load(fs))
+from auth.validator import TokenValidator
 
 
 def test_should_allow_valid_token(
@@ -49,7 +26,7 @@ def test_should_allow_valid_token(
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+        token_validator = TokenValidator(audience, issuer, oidc_config_url)
 
     token_contents = token_validator.decode_verify_token(
         token,
@@ -75,7 +52,7 @@ def test_should_raise_expiry_error(
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+        token_validator = TokenValidator(audience, issuer, oidc_config_url)
 
     with pytest.raises(TokenExpiredError) as exc:
         token_contents = token_validator.decode_verify_token(
@@ -101,7 +78,7 @@ def test_should_raise_error_on_invalid_token(
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+        token_validator = TokenValidator(audience, issuer, oidc_config_url)
 
     with pytest.raises(TokenDecodingError) as exc:
         token_contents = token_validator.decode_verify_token(
@@ -128,7 +105,7 @@ def test_should_raise_error_on_missing_kid(
         m.get(jwks_url, json=valid_jwks)
         m.get(oidc_config_url, json=valid_oidc_config)
 
-        token_validator = _TokenValidator(audience, issuer, oidc_config_url)
+        token_validator = TokenValidator(audience, issuer, oidc_config_url)
 
     with pytest.raises(TokenDecodingError) as exc:
         token_contents = token_validator.decode_verify_token(

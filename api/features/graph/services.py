@@ -14,7 +14,6 @@ from features.graph.exceptions import (
 )
 from models.edag import EDAGRequest, EDAGResource
 from models.edagrun import EDAGRunResource, EDAGRunResponse
-from models.status import GraphStatusDetails
 
 
 class EDAGServices:

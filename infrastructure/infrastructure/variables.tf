@@ -23,8 +23,7 @@ variable "location" {
     description = "Deployment location of resources"
 }
 
-variable "control_node_pool_size" {
-  type = number
-  description = "Number of nodes in control node pool"
-
+variable "worker_node_pool_size" {
+    type = number
+    description = "Number of nodes in control node pool"
 }

@@ -1,0 +1,9 @@
+{{- range $namespace := .Values.namespaces -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ printf "%s-%s" $.Values.global.appName $namespace }}
+  labels:
+    {{ include "common.labels" $ }}
+---
+{{ end }}

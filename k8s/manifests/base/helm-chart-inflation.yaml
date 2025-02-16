@@ -1,0 +1,10 @@
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: mychart
+name: mychart
+releaseName: my-release
+namespace: my-namespace
+chartHome: ./
+chartPath: mychart
+valuesFile: mychart/values.yaml

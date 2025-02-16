@@ -1,0 +1,31 @@
+global:
+    appName: kickplate
+    commonLabels:
+        project: kickplate
+
+namespaces:
+    - api
+
+serviceAccounts:
+    - name: sa-api
+      namespace: api
+      giveRoles:
+        - readMap
+
+roles:
+-   roleName: readMap
+    role: "reader"
+    resources: ["ConfigMap"]
+    apiGroups: ["v1"]
+    namespace: api
+
+deployments:
+    - appName: api
+      namespace: default
+      replicas: 1
+      port: 5000
+      cpurequest: "125m" 
+      memoryrequest: "32Mi" 
+      cpulimit: "250m"
+      memorylimit: "64Mi"
+      serviceAccount: sa-api

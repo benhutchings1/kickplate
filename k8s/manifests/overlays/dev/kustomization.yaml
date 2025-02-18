@@ -4,6 +4,6 @@ resources:
 -   ../../base
 
 images:
-  - name: replaceinoverlay
+  - name: api-replaceinoverlay
     newName: nginx
     newTag: latest

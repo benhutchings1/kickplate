@@ -21,7 +21,7 @@ roles:
 
 deployments:
     - appName: api
-      namespace: default
+      namespace: api
       replicas: 1
       port: 5000
       cpurequest: "125m" 

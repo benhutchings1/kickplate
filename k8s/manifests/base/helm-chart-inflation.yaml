@@ -1,10 +1,8 @@
 apiVersion: builtin
 kind: HelmChartInflationGenerator
 metadata:
-  name: mychart
-name: mychart
-releaseName: my-release
-namespace: my-namespace
+  name: kickplate
+name: kickplate
 chartHome: ./
-chartPath: mychart
-valuesFile: mychart/values.yaml
+chartName: kickplate/kickplate-manifests
+valuesFile: kickplate/values.yaml

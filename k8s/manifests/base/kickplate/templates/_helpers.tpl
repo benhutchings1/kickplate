@@ -1,6 +1,7 @@
 {{- define "common.labels" -}}
-{{ .Values.labelsCommon | toYaml }}
+{{ $.Values.global.commonLabels | toYaml }}
 {{- end -}}
+
 
 {{- define "role.parser" -}}
 {{- $readerRoles := list "get" "list" "watch"  -}}

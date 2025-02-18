@@ -1,0 +1,8 @@
+apiVersion: builtin
+kind: HelmChartInflationGenerator
+metadata:
+  name: kickplate
+name: kickplate
+chartHome: ./
+chartName: kickplate/kickplate-manifests
+valuesFile: kickplate/values.yaml

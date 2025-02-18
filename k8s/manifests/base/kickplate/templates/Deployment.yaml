@@ -1,0 +1,50 @@
+{{- range $deployment := .Values.deployments }}
+{{- $deploymentFullName := printf "%s-%s" $.Values.global.appName $deployment.appName -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $deploymentFullName }}
+  namespace: {{ printf "%s-%s" $.Values.global.appName $deployment.namespace }}
+spec:
+  replicas: {{ $deployment.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $deploymentFullName }}
+  template: 
+    metadata:
+      labels:
+        {{ include "common.labels" $ }}
+        app: {{ $deploymentFullName }}
+    spec:
+      {{- if not (eq $deployment.serviceAccount nil) }}
+      serviceAccountName:  {{ $deployment.serviceAccount }}
+      {{- end }}   
+      containers:
+      - name: {{ $deploymentFullName }}
+        image: {{ printf "%s-replaceinoverlay" $deployment.appName }}        
+        securityContext:
+            runAsUser: 1000
+        ports:
+        - containerPort: {{ $deployment.port }}
+        volumeMounts:
+            - name: service-account-token
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true 
+        imagePullPolicy: IfNotPresent
+        resources:
+            requests:
+                memory: {{ $deployment.memoryrequest }}
+                cpu: {{ $deployment.cpurequest }}
+            limits:
+                memory: {{ $deployment.memorylimit }}
+                cpu: {{ $deployment.cpulimit }}
+      volumes:
+        - name: service-account-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  audience: api 
+                  expirationSeconds: 3600
+---
+{{- end }}

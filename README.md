@@ -57,3 +57,4 @@ See API documentation as an entrypoint to the platform.
 ## Further Documentation
 - [Architecture](./docs/architecture.md)
 - [Front End Design](./docs/dashboard-design.md)
+- [K8s](./docs/k8s.md)

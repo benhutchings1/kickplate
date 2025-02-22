@@ -10,6 +10,11 @@ kubernetes-asyncio = "*"
 cryptography = "*"
 pyjwt = {extras = ["crypto"], version = "*"}
 kr8s = "*"
+opentelemetry-sdk = "*"
+opentelemetry-api = "*"
+opentelemetry-instrumentation-fastapi = "*"
+opentelemetry-instrumentation-logging = "*"
+opentelemetry-exporter-otlp-proto-http = "*"
 
 [dev-packages]
 isort = "*"

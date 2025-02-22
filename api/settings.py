@@ -1,7 +1,14 @@
+from enum import Enum
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from models.auth import Role
+
+
+class Exporter(str, Enum):
+    local = "local"
+    otlp = "otlp"
 
 
 class Settings(BaseSettings):
@@ -13,6 +20,8 @@ class Settings(BaseSettings):
     AUTH_AUDIENCE: str = Field()
     AUTH_REQUIRED_ROLE: Role = Field()
     AUTH_CLIENT_ID: str = Field()
+    OTEL_ENDPOINT: str = Field(default="http://localhost:4318")
+    EXPORTER: Exporter = Field(default=Exporter.otlp)
 
 
 settings = Settings()

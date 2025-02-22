@@ -7,6 +7,8 @@ from auth.security import RBACSecurity
 from models.auth import Role, User
 from models.edag import EDAGRequest
 from models.edagrun import EDAGRunResponse
+from observability.observability import add_attribute
+
 from .services import EDAGServices
 
 router = APIRouter(prefix="/api/v1/edag")
@@ -37,6 +39,7 @@ async def run_edag(
     _user: Annotated[User, Security(RBACSecurity.verify)],
 ) -> EDAGRunResponse:
     run_response = await graph_services.run_edag(edagname)
+    add_attribute({"edag_run_id": run_response.id})
     return cast(EDAGRunResponse, run_response)
 
 

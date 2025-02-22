@@ -9,10 +9,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 
+from models.auth import TokenContents
 from settings import settings
 
 from .errors import InvalidTokenError, TokenDecodingError, TokenExpiredError
-from models.auth import TokenContents
 
 
 class TokenValidator:

@@ -1,8 +1,11 @@
 from typing import cast
+
+import pytest
 from fastapi import Response
 from httpx import AsyncClient
-import pytest
 from starlette.routing import Route
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
+
 from app import app
 from auth.errors import (
     InsufficientPermissionsError,
@@ -10,8 +13,6 @@ from auth.errors import (
     TokenDecodingError,
 )
 from auth.security import RBACSecurity
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_403_FORBIDDEN
-
 
 pytestmark = pytest.mark.asyncio
 

@@ -5,8 +5,8 @@ from faker import Faker
 from fastapi.security import SecurityScopes
 
 from auth.errors import InsufficientPermissionsError
-from models.auth import Role, TokenContents, User
 from auth.security import OAuth, RBACSecurity, rbac_security
+from models.auth import Role, TokenContents, User
 
 fake = Faker()
 

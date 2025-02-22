@@ -2,8 +2,11 @@ import logging
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
-from starlette.status import (HTTP_404_NOT_FOUND, HTTP_409_CONFLICT,
-                              HTTP_500_INTERNAL_SERVER_ERROR)
+from starlette.status import (
+    HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -7,8 +7,7 @@ from kr8s.asyncio.objects import APIObject
 
 from entity_builders.edag import EDAGBuilder
 from external.kubernetes import _NAMESPACE, KubernetesClient
-from models.edag import (EDAGRequest, EDAGRequestStep, EDAGResource,
-                         EDAGStepResource)
+from models.edag import EDAGRequest, EDAGRequestStep, EDAGResource, EDAGStepResource
 
 pytestmark = pytest.mark.asyncio
 

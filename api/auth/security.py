@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import Depends
 from fastapi.security import OAuth2AuthorizationCodeBearer, SecurityScopes
 
+from models.auth import Role, TokenContents, User
 from settings import settings
 
 from .errors import InsufficientPermissionsError
-from models.auth import Role, TokenContents, User
 from .validator import TokenValidator, get_token_validator
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(

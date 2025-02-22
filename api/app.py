@@ -4,12 +4,12 @@ from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
-from fastapi.security import OAuth2AuthorizationCodeBearer
 
 from auth.validator import initialise_token_validator
 from error_handling import add_error_handlers
 from features.graph.router import router as graph_router
 from features.health.router import router as health_router
+from observability.observability import setup_otel
 from settings import settings
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ app = FastAPI(
     },
 )
 
+setup_otel(app)
 add_error_handlers(app)
 app.include_router(health_router)
 app.include_router(graph_router)

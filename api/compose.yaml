@@ -1,0 +1,16 @@
+services:
+    prometheus:
+        image: prom/prometheus
+        ports: 
+            - 9090:9090
+    grafana:
+        image: grafana/grafana-enterprise
+        ports: 
+            - 3000:3000
+    collector:
+        image: otel/opentelemetry-collector
+        ports: 
+            - 4318:4318
+            - 4317:4317
+        volumes:
+            - ./collector-config.yaml:/etc/otelcol/config.yaml
